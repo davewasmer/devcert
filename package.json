@@ -1,6 +1,6 @@
 {
   "name": "devcert",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",
   "scripts": {
@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/davewasmer/devcert#readme",
   "devDependencies": {
+    "standard-version": "^4.0.0",
     "typescript": "^2.2.2"
   },
   "dependencies": {

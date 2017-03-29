@@ -34,7 +34,7 @@ const opensslConfPath = path.join(__dirname, '..', 'openssl.conf');
 const rootKeyPath = configPath('devcert-ca-root.key');
 const rootCertPath = configPath('devcert-ca-root.crt');
 
-interface Options {
+export interface Options {
   installCertutil?: boolean;
 }
 
@@ -43,7 +43,7 @@ interface Certificate {
   cert: string;
 }
 
-export default function devcert(appName: string, options: Options = {}) {
+export default async function devcert(appName: string, options: Options = {}) {
 
   // Fail fast on unsupported platforms (PRs welcome!)
   if (!isMac && !isLinux && !isWindows) {
@@ -54,7 +54,7 @@ export default function devcert(appName: string, options: Options = {}) {
   }
 
   if (!existsSync(configPath('devcert-ca-root.key'))) {
-    installCertificateAuthority(options.installCertutil);
+    await installCertificateAuthority(options.installCertutil);
   }
 
   // Load our root CA and sign a new app cert with it.
@@ -72,10 +72,10 @@ export default function devcert(appName: string, options: Options = {}) {
 
 // Install the once-per-machine trusted root CA. We'll use this CA to sign per-app certs, allowing
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
-function installCertificateAuthority(installCertutil) {
+async function installCertificateAuthority(installCertutil: boolean) {
   let rootKeyPath = generateKey('devcert-ca-root');
   execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj '/CN=devcert' -x509 -days 7000 -extensions v3_ca`);
-  addCertificateToTrustStores(installCertutil);
+  await addCertificateToTrustStores(installCertutil);
 }
 
 // Generate a cryptographic key, used to sign certificates or certificate signing requests.

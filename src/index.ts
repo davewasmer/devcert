@@ -74,7 +74,7 @@ export default async function devcert(appName: string, options: Options = {}) {
 // Install the once-per-machine trusted root CA. We'll use this CA to sign per-app certs, allowing
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
 async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
-  let rootKeyPath = generateKey('devcert-ca-root');
+  generateKey('devcert-ca-root');
   execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj '/CN=devcert' -x509 -days 7000 -extensions v3_ca`);
   await addCertificateToTrustStores(installCertutil);
 }

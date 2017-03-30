@@ -13,21 +13,23 @@ import { execSync } from 'child_process';
 import * as tmp from 'tmp';
 import * as glob from 'glob';
 import * as Configstore from 'configstore';
+import * as mkdirp from 'mkdirp';
 import { sync as commandExists } from 'command-exists';
 
 const isMac = process.platform === 'darwin';
 const isLinux = process.platform === 'linux';
 const isWindows = process.platform === 'win32';
 
-// use %LOCALAPPDATA%/Yarn on Windows otherwise use ~/.config/yarn
+// use %LOCALAPPDATA%/devcert on Windows otherwise use ~/.config/devcert
 let configDir: string;
 if (isWindows && process.env.LOCALAPPDATA) {
-  configDir = path.join(process.env.LOCALAPPDATA, 'Yarn', 'config');
+  configDir = path.join(process.env.LOCALAPPDATA, 'devcert', 'config');
 } else {
   let uid = process.getuid && process.getuid();
   let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
-  configDir = path.join(userHome, '.config', 'yarn');
+  configDir = path.join(userHome, '.config', 'devcert');
 }
+mkdirp.sync(configDir);
 const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
 const opensslConfPath = path.join(__dirname, '..', 'openssl.conf');

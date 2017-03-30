@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.3"></a>
+## [0.2.3](https://github.com/davewasmer/devcert/compare/v0.2.2...v0.2.3) (2017-03-30)
+
+
+### Bug Fixes
+
+* make the config dir first ([fab033a](https://github.com/davewasmer/devcert/commit/fab033a))
+
+
+
 <a name="0.2.2"></a>
 ## [0.2.2](https://github.com/davewasmer/devcert/compare/v0.2.1...v0.2.2) (2017-03-30)
 

@@ -4,7 +4,8 @@
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Ha.\" && exit 1"
+    "test": "echo \"Ha.\" && exit 1",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",

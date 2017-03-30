@@ -28,7 +28,7 @@ if (isWindows && process.env.LOCALAPPDATA) {
   let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
   path.join(userHome, '.config', 'yarn');
 }
-const configPath = path.join.bind(path, configDir);
+const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
 const opensslConfPath = path.join(__dirname, '..', 'openssl.conf');
 const rootKeyPath = configPath('devcert-ca-root.key');
@@ -36,11 +36,6 @@ const rootCertPath = configPath('devcert-ca-root.crt');
 
 export interface Options {
   installCertutil?: boolean;
-}
-
-interface Certificate {
-  key: string;
-  cert: string;
 }
 
 export default async function devcert(appName: string, options: Options = {}) {
@@ -53,46 +48,48 @@ export default async function devcert(appName: string, options: Options = {}) {
     throw new Error('Unable to find openssl - make sure it is installed and available in your PATH');
   }
 
-  if (!existsSync(configPath('devcert-ca-root.key'))) {
+  let appKeyPath = configPath(`${ appName }.key`);
+  let appCertPath = configPath(`${ appName }.crt`);
+
+  if (!existsSync(rootKeyPath)) {
     await installCertificateAuthority(options.installCertutil);
   }
 
-  // Load our root CA and sign a new app cert with it.
-  let appKeyPath = generateKey(appName);
-  let appCertificatePath = generateSignedCertificate(appName, appKeyPath);
+  if (!existsSync(configPath(`${ appName }.key`))) {
+    generateKey(appName);
+    generateSignedCertificate(appName, appKeyPath);
+  }
 
   return {
     keyPath: appKeyPath,
-    certificatePath: appCertificatePath,
+    certPath: appCertPath,
     key: readFileSync(appKeyPath),
-    certificate: readFileSync(appCertificatePath)
+    cert: readFileSync(appCertPath)
   };
 
 }
 
 // Install the once-per-machine trusted root CA. We'll use this CA to sign per-app certs, allowing
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
-async function installCertificateAuthority(installCertutil: boolean) {
+async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
   let rootKeyPath = generateKey('devcert-ca-root');
   execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj '/CN=devcert' -x509 -days 7000 -extensions v3_ca`);
   await addCertificateToTrustStores(installCertutil);
 }
 
 // Generate a cryptographic key, used to sign certificates or certificate signing requests.
-function generateKey(name: string): string {
+function generateKey(name: string): void {
   let filename = configPath(`${ name }.key`);
   execSync(`openssl genrsa -out ${ filename } 2048`);
   chmodSync(filename, 400);
-  return filename;
 }
 
 // Generate a certificate signed by the devcert root CA
-function generateSignedCertificate(name: string, keyPath: string): string {
+function generateSignedCertificate(name: string, keyPath: string): void {
   let csrFile = configPath(`${ name }.csr`)
   execSync(`openssl req -config ${ opensslConfPath } -subj '/CN=${ name }' -key ${ keyPath } -out ${ csrFile } -new`);
   let certPath = configPath(`${ name }.crt`);
   execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -extensions server_cert`)
-  return certPath;
 }
 
 // Add the devcert root CA certificate to the trust stores for this machine. Adds to OS level trust
@@ -123,9 +120,11 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
       await openCertificateInFirefox('firefox');
     }
     // Chrome
-    // No try..catch, since there's no alternative here. Chrome won't prompt to add a cert to the
-    // store if opened as a URL
-    addCertificateToNSSCertDB('~/.pki/nssdb', installCertutil);
+    try {
+      addCertificateToNSSCertDB('~/.pki/nssdb', installCertutil);
+    } catch (e) {
+      console.warn('WARNING: Because you did not pass in `installCertutil` to devcert, we are unable to update Chrome to respect generated development certificates. The certificates will work, but Chrome will continue to warn you that they are untrusted.');
+    }
 
   // Windows
   } else if (isWindows) {
@@ -153,7 +152,7 @@ function addCertificateToNSSCertDB(nssDirGlob: string, installCertutil: boolean)
 }
 
 // Launch a web server and open the root cert in Firefox. Useful for when certutil isn't available
-async function openCertificateInFirefox(firefoxPath: string) {
+async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
   let port = await getPort();
   let server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-type': 'application/x-x509-ca-cert' });
@@ -162,6 +161,8 @@ async function openCertificateInFirefox(firefoxPath: string) {
   }).listen(port);
   execSync(`${ firefoxPath } http://localhost:${ port }`);
   await new Promise((resolve) => {
+    console.log('Unable to automatically install SSL certificate - please follow the prompts in Firefox to trust the root certificate');
+    console.log('See https://github.com/davewasmer/devcert#how-it-works for more details');
     process.stdin.resume();
     process.stdin.on('data', resolve);
   });

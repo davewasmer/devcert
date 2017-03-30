@@ -26,7 +26,7 @@ if (isWindows && process.env.LOCALAPPDATA) {
 } else {
   let uid = process.getuid && process.getuid();
   let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
-  path.join(userHome, '.config', 'yarn');
+  configDir = path.join(userHome, '.config', 'yarn');
 }
 const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 

@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.7"></a>
+## [0.2.7](https://github.com/davewasmer/devcert/compare/v0.2.6...v0.2.7) (2017-03-31)
+
+
+### Bug Fixes
+
+* do not block with execSync when launching firefox, template openssl conf to get config paths ([2600a89](https://github.com/davewasmer/devcert/commit/2600a89))
+
+
+
 <a name="0.2.6"></a>
 ## [0.2.6](https://github.com/davewasmer/devcert/compare/v0.2.5...v0.2.6) (2017-03-31)
 

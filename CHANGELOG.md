@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.8"></a>
+## [0.2.8](https://github.com/davewasmer/devcert/compare/v0.2.7...v0.2.8) (2017-03-31)
+
+
+### Bug Fixes
+
+* add -batch flag to avoid prompting ([5ba2424](https://github.com/davewasmer/devcert/commit/5ba2424))
+* add root ca cert to /etc/ssl/certs on linux ([5dc37a4](https://github.com/davewasmer/devcert/commit/5dc37a4))
+
+
+
 <a name="0.2.7"></a>
 ## [0.2.7](https://github.com/davewasmer/devcert/compare/v0.2.6...v0.2.7) (2017-03-31)
 

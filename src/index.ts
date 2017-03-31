@@ -135,6 +135,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
   } else if (isLinux) {
     // system utils
     debug('adding devcert root CA to linux system-wide certificates');
+    execSync(`sudo cp ${ rootCertPath } /etc/ssl/certs/devcert.pem`);
     execSync(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer`);
     execSync(`sudo update-ca-certificates`);
     // Firefox

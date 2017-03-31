@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@types/configstore": "^2.1.1",
+    "@types/debug": "^0.0.29",
     "@types/get-port": "^0.0.4",
     "@types/glob": "^5.0.30",
     "@types/mkdirp": "^0.3.29",
@@ -36,6 +37,7 @@
     "@types/tmp": "^0.0.32",
     "command-exists": "^1.2.2",
     "configstore": "^3.0.0",
+    "debug": "^2.6.3",
     "get-port": "^3.0.0",
     "glob": "^7.1.1",
     "mkdirp": "^0.5.1",

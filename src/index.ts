@@ -58,6 +58,7 @@ export default async function devcert(appName: string, options: Options = {}) {
   let appCertPath = configPath(`${ appName }.crt`);
 
   if (!existsSync(rootKeyPath)) {
+    debug('devcert root CA not installed yet, must be first run; installing root CA ...');
     await installCertificateAuthority(options.installCertutil);
   }
 
@@ -127,7 +128,8 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
   } else if (isLinux) {
     // system utils
     debug('adding devcert root CA to linux system-wide certificates');
-    execSync(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer && update-ca-certificates`);
+    execSync(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer`);
+    execSync(`sudo update-ca-certificates`);
     // Firefox
     try {
       // Try to use certutil to install the cert automatically

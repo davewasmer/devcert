@@ -111,7 +111,7 @@ function generateSignedCertificate(name: string, keyPath: string): void {
   execSync(`openssl req -config ${ opensslConfPath } -subj '/CN=${ name }' -key ${ keyPath } -out ${ csrFile } -new`);
   debug(`generating certificate for ${ name } from signing request; signing with devcert root CA`);
   let certPath = configPath(`${ name }.crt`);
-  execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -extensions server_cert`)
+  execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
 }
 
 // Add the devcert root CA certificate to the trust stores for this machine. Adds to OS level trust

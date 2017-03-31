@@ -9,7 +9,7 @@ import {
 import * as path from 'path';
 import * as getPort from 'get-port';
 import * as http from 'http';
-import { execSync } from 'child_process';
+import { exec, execSync } from 'child_process';
 import * as tmp from 'tmp';
 import * as glob from 'glob';
 import * as Configstore from 'configstore';
@@ -32,12 +32,16 @@ if (isWindows && process.env.LOCALAPPDATA) {
   let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
   configDir = path.join(userHome, '.config', 'devcert');
 }
-mkdirp.sync(configDir);
 const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
-const opensslConfPath = path.join(__dirname, '..', 'openssl.conf');
+const opensslConfTemplate = path.join(__dirname, '..', 'openssl.conf');
+const opensslConfPath = configPath('openssl.conf');
 const rootKeyPath = configPath('devcert-ca-root.key');
 const rootCertPath = configPath('devcert-ca-root.crt');
+const caCertsDir = configPath('certs');
+
+mkdirp.sync(configDir);
+mkdirp.sync(caCertsDir);
 
 export interface Options {
   installCertutil?: boolean;
@@ -57,14 +61,14 @@ export default async function devcert(appName: string, options: Options = {}) {
   let appKeyPath = configPath(`${ appName }.key`);
   let appCertPath = configPath(`${ appName }.crt`);
 
-  if (!existsSync(rootKeyPath)) {
+  if (!existsSync(rootCertPath)) {
     debug('devcert root CA not installed yet, must be first run; installing root CA ...');
     await installCertificateAuthority(options.installCertutil);
   }
 
-  if (!existsSync(configPath(`${ appName }.key`))) {
+  if (!existsSync(configPath(`${ appName }.crt`))) {
     debug(`first request for ${ appName } cert, generating and caching ...`);
-    generateKey(appName);
+    generateKey(configPath(`${ appName }.key`));
     generateSignedCertificate(appName, appKeyPath);
   }
 
@@ -81,18 +85,21 @@ export default async function devcert(appName: string, options: Options = {}) {
 // Install the once-per-machine trusted root CA. We'll use this CA to sign per-app certs, allowing
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
 async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
+  debug(`generating openssl configuration`);
+  writeFileSync(opensslConfPath, readFileSync(opensslConfTemplate, 'utf-8').replace(/DIR/g, configDir));
   debug(`generating root certificate authority key`);
-  generateKey('devcert-ca-root');
+  generateKey(rootKeyPath);
   debug(`generating root certificate authority certificate`);
   execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj '/CN=devcert' -x509 -days 7000 -extensions v3_ca`);
   debug(`adding root certificate authority to trust stores`)
   await addCertificateToTrustStores(installCertutil);
+  writeFileSync(configPath('index.txt'), '');
+  writeFileSync(configPath('serial'), '01');
 }
 
 // Generate a cryptographic key, used to sign certificates or certificate signing requests.
-function generateKey(name: string): void {
-  debug(`generateKey: ${ name }`);
-  let filename = configPath(`${ name }.key`);
+function generateKey(filename: string): void {
+  debug(`generateKey: ${ filename }`);
   execSync(`openssl genrsa -out ${ filename } 2048`);
   chmodSync(filename, 400);
 }
@@ -104,7 +111,7 @@ function generateSignedCertificate(name: string, keyPath: string): void {
   execSync(`openssl req -config ${ opensslConfPath } -subj '/CN=${ name }' -key ${ keyPath } -out ${ csrFile } -new`);
   debug(`generating certificate for ${ name } from signing request; signing with devcert root CA`);
   let certPath = configPath(`${ name }.crt`);
-  execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -extensions server_cert`)
+  execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -extensions server_cert`)
 }
 
 // Add the devcert root CA certificate to the trust stores for this machine. Adds to OS level trust
@@ -185,12 +192,11 @@ async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
     res.end();
   }).listen(port);
   debug('certificate is hosted, starting firefox at hosted URL');
-  execSync(`${ firefoxPath } http://localhost:${ port }`);
   await new Promise((resolve) => {
-    console.log('Unable to automatically install SSL certificate - please follow the prompts in Firefox to trust the root certificate');
+    console.log('Unable to automatically install SSL certificate - please follow the prompts at http://localhost:${ port } in Firefox to trust the root certificate');
     console.log('See https://github.com/davewasmer/devcert#how-it-works for more details');
-    console.log('Press any key once you finish the Firefox prompts');
-    debug('waiting for user to finish firefox certificate import');
+    console.log('-- Press <Enter> once you finish the Firefox prompts --');
+    exec(`${ firefoxPath } http://localhost:${ port }`);
     process.stdin.resume();
     process.stdin.on('data', resolve);
   });

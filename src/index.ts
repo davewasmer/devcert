@@ -86,7 +86,10 @@ export default async function devcert(appName: string, options: Options = {}) {
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
 async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
   debug(`generating openssl configuration`);
-  writeFileSync(opensslConfPath, readFileSync(opensslConfTemplate, 'utf-8').replace(/DIR/g, configDir));
+  let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
+  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt'));
+  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial'));
+  writeFileSync(opensslConfPath, confTemplate);
   debug(`generating root certificate authority key`);
   generateKey(rootKeyPath);
   debug(`generating root certificate authority certificate`);

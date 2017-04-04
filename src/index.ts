@@ -194,7 +194,7 @@ async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
   }).listen(port);
   debug('certificate is hosted, starting firefox at hosted URL');
   await new Promise((resolve) => {
-    console.log('Unable to automatically install SSL certificate - please follow the prompts at http://localhost:${ port } in Firefox to trust the root certificate');
+    console.log(`Unable to automatically install SSL certificate - please follow the prompts at http://localhost:${ port } in Firefox to trust the root certificate`);
     console.log('See https://github.com/davewasmer/devcert#how-it-works for more details');
     console.log('-- Press <Enter> once you finish the Firefox prompts --');
     exec(`${ firefoxPath } http://localhost:${ port }`);

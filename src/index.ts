@@ -93,7 +93,7 @@ async function installCertificateAuthority(installCertutil: boolean): Promise<vo
   debug(`generating root certificate authority key`);
   generateKey(rootKeyPath);
   debug(`generating root certificate authority certificate`);
-  execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj '/CN=devcert' -x509 -days 7000 -extensions v3_ca`);
+  execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
   debug(`adding root certificate authority to trust stores`)
   await addCertificateToTrustStores(installCertutil);
   writeFileSync(configPath('index.txt'), '');
@@ -111,7 +111,7 @@ function generateKey(filename: string): void {
 function generateSignedCertificate(name: string, keyPath: string): void {
   debug(`generating certificate signing request for ${ name }`);
   let csrFile = configPath(`${ name }.csr`)
-  execSync(`openssl req -config ${ opensslConfPath } -subj '/CN=${ name }' -key ${ keyPath } -out ${ csrFile } -new`);
+  execSync(`openssl req -config ${ opensslConfPath } -subj "/CN=${ name }" -key ${ keyPath } -out ${ csrFile } -new`);
   debug(`generating certificate for ${ name } from signing request; signing with devcert root CA`);
   let certPath = configPath(`${ name }.crt`);
   execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)

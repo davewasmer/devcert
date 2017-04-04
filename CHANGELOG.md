@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.9"></a>
+## [0.2.9](https://github.com/davewasmer/devcert/compare/v0.2.8...v0.2.9) (2017-04-04)
+
+
+### Bug Fixes
+
+* don't hardcode path separators in conf template ([b7db54a](https://github.com/davewasmer/devcert/commit/b7db54a))
+* fix quote marks -> template string ([32f24f7](https://github.com/davewasmer/devcert/commit/32f24f7))
+
+
+
 <a name="0.2.8"></a>
 ## [0.2.8](https://github.com/davewasmer/devcert/compare/v0.2.7...v0.2.8) (2017-03-31)
 

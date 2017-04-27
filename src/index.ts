@@ -166,7 +166,11 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
       debug('adding devcert root CA to chrome');
       addCertificateToNSSCertDB('~/.pki/nssdb', installCertutil);
     } catch (e) {
-      console.warn('WARNING: Because you did not pass in `installCertutil` to devcert, we are unable to update Chrome to respect generated development certificates. The certificates will work, but Chrome will continue to warn you that they are untrusted.');
+      console.warn(`
+WARNING: Because you did not pass in \`installCertutil: true\` to devcert, we
+are unable to update Chrome to automatically trust generated development
+certificates. The certificates will work, but Chrome will continue to warn you
+that they are untrusted.`);
     }
 
   // Windows

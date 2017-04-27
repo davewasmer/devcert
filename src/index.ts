@@ -195,10 +195,10 @@ function addCertificateToNSSCertDB(nssDirGlob: string, installCertutil: boolean)
     debug(`checking to see if ${ potentialNSSDBDir } is a valid NSS database directory`);
     if (existsSync(path.join(potentialNSSDBDir, 'cert8.db'))) {
       debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      run(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
+      run(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath } -n devcert`);
     } else if (existsSync(path.join(potentialNSSDBDir, 'cert9.db'))) {
       debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      run(`${ certutilPath } -A -d sql:${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
+      run(`${ certutilPath } -A -d sql:${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath } -n devcert`);
     }
   });
 }

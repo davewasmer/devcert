@@ -230,18 +230,21 @@ function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
     debug('on mac, looking for homebrew (the only method for install nss supported by devcert');
     if (commandExists('brew')) {
       let nssPath: string;
+      let certutilPath: string;
       try {
-        let certutilPath = path.join(run('brew --prefix nss').toString(), 'bin', 'certutil');
-        debug(`Found nss installed at ${ certutilPath }`);
-        return certutilPath;
+        certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
       } catch (e) {
         debug('brew was found, but nss is not installed');
         if (installCertutil) {
           debug('attempting to install nss via brew');
           run('brew install nss');
-          return path.join(run('brew --prefix nss').toString(), 'bin', 'certutil');
+          certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
+        } else {
+          return false;
         }
       }
+      debug(`Found nss installed at ${ certutilPath }`);
+      return certutilPath;
     }
   } else if (isLinux) {
     debug('on linux, checking is nss is already installed');
@@ -255,7 +258,7 @@ function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
       }
     }
     debug('looks like nss is installed');
-    return run('which certutil').toString();
+    return run('which certutil').toString().trim();
   }
   return false;
 }

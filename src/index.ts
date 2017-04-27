@@ -140,7 +140,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     try {
       // Try to use certutil to install the cert automatically
       debug('adding devcert root CA to firefox');
-      addCertificateToNSSCertDB('~/Library/Application Support/Firefox/Profiles/*', installCertutil);
+      addCertificateToNSSCertDB(path.join(process.env.HOME, 'Library/Application Support/Firefox/Profiles/*'), installCertutil);
     } catch (e) {
       // Otherwise, open the cert in Firefox to install it
       await openCertificateInFirefox('/Applications/Firefox.app/Contents/MacOS/firefox');
@@ -156,7 +156,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     try {
       // Try to use certutil to install the cert automatically
       debug('adding devcert root CA to firefox');
-      addCertificateToNSSCertDB('~/.mozilla/firefox/*', installCertutil);
+      addCertificateToNSSCertDB(path.join(process.env.HOME, '.mozilla/firefox/*'), installCertutil);
     } catch (e) {
       // Otherwise, open the cert in Firefox to install it
       await openCertificateInFirefox('firefox');
@@ -164,7 +164,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     // Chrome
     try {
       debug('adding devcert root CA to chrome');
-      addCertificateToNSSCertDB('~/.pki/nssdb', installCertutil);
+      addCertificateToNSSCertDB(path.join(process.env.HOME, '.pki/nssdb'), installCertutil);
     } catch (e) {
       console.warn(`
 WARNING: Because you did not pass in \`installCertutil: true\` to devcert, we

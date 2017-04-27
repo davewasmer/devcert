@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.13"></a>
+## [0.2.13](https://github.com/davewasmer/devcert/compare/v0.2.12...v0.2.13) (2017-04-27)
+
+
+### Bug Fixes
+
+* fix installCertutil handling ([1a571e1](https://github.com/davewasmer/devcert/commit/1a571e1))
+* silence openssl output ([f66f558](https://github.com/davewasmer/devcert/commit/f66f558))
+
+
+
 <a name="0.2.12"></a>
 ## [0.2.12](https://github.com/davewasmer/devcert/compare/v0.2.11...v0.2.12) (2017-04-27)
 

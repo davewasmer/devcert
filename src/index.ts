@@ -51,10 +51,10 @@ export interface Options {
 export default async function devcert(appName: string, options: Options = {}) {
   debug(`development cert requested for ${ appName }`);
 
-  // Fail fast on unsupported platforms (PRs welcome!)
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`devcert: "${ process.platform }" platform not supported`);
   }
+
   if (!commandExists('openssl')) {
     throw new Error('Unable to find openssl - make sure it is installed and available in your PATH');
   }
@@ -87,17 +87,26 @@ export default async function devcert(appName: string, options: Options = {}) {
 // us to minimize the need for elevated permissions while still allowing for per-app certificates.
 async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
   debug(`generating openssl configuration`);
-  let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
-  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt').replace('\\', '\\\\'));
-  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial').replace('\\', '\\\\'));
-  confTemplate = eol.auto(confTemplate);
-  writeFileSync(opensslConfPath, confTemplate);
+  generateOpenSSLConfFiles();
+
   debug(`generating root certificate authority key`);
   generateKey(rootKeyPath);
+
   debug(`generating root certificate authority certificate`);
-  execSync(`openssl req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
+  openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
+
   debug(`adding root certificate authority to trust stores`)
   await addCertificateToTrustStores(installCertutil);
+}
+
+// Copy our openssl conf template to the local config folder, and update the paths
+// to be OS specific
+function generateOpenSSLConfFiles() {
+  let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
+  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt').replace(/\\/g, '\\\\'));
+  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial').replace(/\\/g, '\\\\'));
+  confTemplate = eol.auto(confTemplate);
+  writeFileSync(opensslConfPath, confTemplate);
   writeFileSync(configPath('index.txt'), '');
   writeFileSync(configPath('serial'), '01');
 }
@@ -105,7 +114,7 @@ async function installCertificateAuthority(installCertutil: boolean): Promise<vo
 // Generate a cryptographic key, used to sign certificates or certificate signing requests.
 function generateKey(filename: string): void {
   debug(`generateKey: ${ filename }`);
-  execSync(`openssl genrsa -out ${ filename } 2048`);
+  openssl(`genrsa -out ${ filename } 2048`);
   chmodSync(filename, 400);
 }
 
@@ -113,10 +122,10 @@ function generateKey(filename: string): void {
 function generateSignedCertificate(name: string, keyPath: string): void {
   debug(`generating certificate signing request for ${ name }`);
   let csrFile = configPath(`${ name }.csr`)
-  execSync(`openssl req -config ${ opensslConfPath } -subj "/CN=${ name }" -key ${ keyPath } -out ${ csrFile } -new`);
+  openssl(`req -config ${ opensslConfPath } -subj "/CN=${ name }" -key ${ keyPath } -out ${ csrFile } -new`);
   debug(`generating certificate for ${ name } from signing request; signing with devcert root CA`);
   let certPath = configPath(`${ name }.crt`);
-  execSync(`openssl ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
+  openssl(`ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
 }
 
 // Add the devcert root CA certificate to the trust stores for this machine. Adds to OS level trust
@@ -243,4 +252,12 @@ function lookupOrInstallCertutil(options: Options): boolean | string {
     return execSync('which certutil').toString();
   }
   return false;
+}
+
+function openssl(cmd: string) {
+  return execSync(`openssl ${ cmd }`, {
+    env: Object.assign({
+      RANDFILE: path.join(configPath('.rnd'))
+    }, process.env)
+  });
 }

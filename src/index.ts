@@ -260,6 +260,7 @@ function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
 
 function openssl(cmd: string) {
   return execSync(`openssl ${ cmd }`, {
+    stdio: 'ignore',
     env: Object.assign({
       RANDFILE: path.join(configPath('.rnd'))
     }, process.env)

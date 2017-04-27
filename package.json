@@ -1,6 +1,6 @@
 {
   "name": "devcert",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",
   "scripts": {

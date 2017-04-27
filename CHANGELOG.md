@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.2.15"></a>
+## [0.2.15](https://github.com/davewasmer/devcert/compare/v0.2.14...v0.2.15) (2017-04-27)
+
+
+
 <a name="0.2.14"></a>
 ## [0.2.14](https://github.com/davewasmer/devcert/compare/v0.2.13...v0.2.14) (2017-04-27)
 

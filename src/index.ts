@@ -9,7 +9,7 @@ import {
 import * as path from 'path';
 import * as getPort from 'get-port';
 import * as http from 'http';
-import { exec, execSync } from 'child_process';
+import { exec, execSync, ExecSyncOptions } from 'child_process';
 import * as tmp from 'tmp';
 import * as glob from 'glob';
 import * as Configstore from 'configstore';
@@ -135,7 +135,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
   if (isMac) {
     // Chrome, Safari, system utils
     debug('adding devcert root CA to macOS system keychain');
-    execSync(`sudo security add-trusted-cert -r trustRoot -k /Library/Keychains/System.keychain -p ssl "${ rootCertPath }"`);
+    run(`sudo security add-trusted-cert -r trustRoot -k /Library/Keychains/System.keychain -p ssl "${ rootCertPath }"`);
     // Firefox
     try {
       // Try to use certutil to install the cert automatically
@@ -149,9 +149,9 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
   } else if (isLinux) {
     // system utils
     debug('adding devcert root CA to linux system-wide certificates');
-    execSync(`sudo cp ${ rootCertPath } /etc/ssl/certs/devcert.pem`);
-    execSync(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer`);
-    execSync(`sudo update-ca-certificates`);
+    run(`sudo cp ${ rootCertPath } /etc/ssl/certs/devcert.pem`);
+    run(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer`);
+    run(`sudo update-ca-certificates`);
     // Firefox
     try {
       // Try to use certutil to install the cert automatically
@@ -177,7 +177,7 @@ that they are untrusted.`);
   } else if (isWindows) {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
-    execSync(`certutil -addstore -user root ${ rootCertPath }`);
+    run(`certutil -addstore -user root ${ rootCertPath }`);
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox');
   }
@@ -193,10 +193,10 @@ function addCertificateToNSSCertDB(nssDirGlob: string, installCertutil: boolean)
   glob.sync(nssDirGlob).forEach((potentialNSSDBDir) => {
     if (existsSync(path.join(potentialNSSDBDir, 'cert8.db'))) {
       debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      execSync(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
+      run(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
     } else if (existsSync(path.join(potentialNSSDBDir, 'cert9.db'))) {
       debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      execSync(`${ certutilPath } -A -d sql:${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
+      run(`${ certutilPath } -A -d sql:${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);
     }
   });
 }
@@ -229,15 +229,15 @@ function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
     if (commandExists('brew')) {
       let nssPath: string;
       try {
-        let certutilPath = path.join(execSync('brew --prefix nss').toString(), 'bin', 'certutil');
+        let certutilPath = path.join(run('brew --prefix nss').toString(), 'bin', 'certutil');
         debug(`Found nss installed at ${ certutilPath }`);
         return certutilPath;
       } catch (e) {
         debug('brew was found, but nss is not installed');
         if (installCertutil) {
           debug('attempting to install nss via brew');
-          execSync('brew install nss');
-          return path.join(execSync('brew --prefix nss').toString(), 'bin', 'certutil');
+          run('brew install nss');
+          return path.join(run('brew --prefix nss').toString(), 'bin', 'certutil');
         }
       }
     }
@@ -246,23 +246,28 @@ function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
     if (!commandExists('certutil')) {
       if (installCertutil) {
         debug('not already installed, installing it ourselves');
-        execSync('sudo apt install libnss3-tools');
+        run('sudo apt install libnss3-tools');
       } else {
         debug('not installed and do not want to install');
         return false;
       }
     }
     debug('looks like nss is installed');
-    return execSync('which certutil').toString();
+    return run('which certutil').toString();
   }
   return false;
 }
 
 function openssl(cmd: string) {
-  return execSync(`openssl ${ cmd }`, {
+  return run(`openssl ${ cmd }`, {
     stdio: 'ignore',
     env: Object.assign({
       RANDFILE: path.join(configPath('.rnd'))
     }, process.env)
   });
+}
+
+function run(cmd: string, options: ExecSyncOptions = {}) {
+  debug(`exec: \`${ cmd }\``);
+  return execSync(cmd, options);
 }

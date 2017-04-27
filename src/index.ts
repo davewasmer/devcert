@@ -222,7 +222,7 @@ async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
 }
 
 // Try to install certutil if it's not already available, and return the path to the executable
-function lookupOrInstallCertutil(options: Options): boolean | string {
+function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
   debug('looking for nss tooling ...')
   if (isMac) {
     debug('on mac, looking for homebrew (the only method for install nss supported by devcert');
@@ -234,7 +234,7 @@ function lookupOrInstallCertutil(options: Options): boolean | string {
         return certutilPath;
       } catch (e) {
         debug('brew was found, but nss is not installed');
-        if (options.installCertutil) {
+        if (installCertutil) {
           debug('attempting to install nss via brew');
           execSync('brew install nss');
           return path.join(execSync('brew --prefix nss').toString(), 'bin', 'certutil');
@@ -244,7 +244,7 @@ function lookupOrInstallCertutil(options: Options): boolean | string {
   } else if (isLinux) {
     debug('on linux, checking is nss is already installed');
     if (!commandExists('certutil')) {
-      if (options.installCertutil) {
+      if (installCertutil) {
         debug('not already installed, installing it ourselves');
         execSync('sudo apt install libnss3-tools');
       } else {

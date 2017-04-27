@@ -190,7 +190,9 @@ function addCertificateToNSSCertDB(nssDirGlob: string, installCertutil: boolean)
   if (!certutilPath) {
     throw new Error('certutil not available, and `installCertutil` was false');
   }
+  debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
   glob.sync(nssDirGlob).forEach((potentialNSSDBDir) => {
+    debug(`checking to see if ${ potentialNSSDBDir } is a valid NSS database directory`);
     if (existsSync(path.join(potentialNSSDBDir, 'cert8.db'))) {
       debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
       run(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath }`);

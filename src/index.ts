@@ -15,6 +15,7 @@ import * as glob from 'glob';
 import * as Configstore from 'configstore';
 import * as mkdirp from 'mkdirp';
 import * as createDebug from 'debug';
+import * as eol from 'eol';
 import { sync as commandExists } from 'command-exists';
 
 const debug = createDebug('devcert');
@@ -89,6 +90,7 @@ async function installCertificateAuthority(installCertutil: boolean): Promise<vo
   let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
   confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt'));
   confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial'));
+  confTemplate = eol.auto(confTemplate);
   writeFileSync(opensslConfPath, confTemplate);
   debug(`generating root certificate authority key`);
   generateKey(rootKeyPath);

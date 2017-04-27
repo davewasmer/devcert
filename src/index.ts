@@ -88,8 +88,8 @@ export default async function devcert(appName: string, options: Options = {}) {
 async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
   debug(`generating openssl configuration`);
   let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
-  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt'));
-  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial'));
+  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt').replace('\\', '\\\\'));
+  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial').replace('\\', '\\\\'));
   confTemplate = eol.auto(confTemplate);
   writeFileSync(opensslConfPath, confTemplate);
   debug(`generating root certificate authority key`);

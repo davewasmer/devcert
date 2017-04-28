@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.2"></a>
+## [0.3.2](https://github.com/davewasmer/devcert/compare/v0.3.1...v0.3.2) (2017-04-28)
+
+
+### Bug Fixes
+
+* add -d flag to security command, not sure why it ignores -p otherwise, but oh well ([842404f](https://github.com/davewasmer/devcert/commit/842404f))
+
+
+
 <a name="0.3.1"></a>
 ## [0.3.1](https://github.com/davewasmer/devcert/compare/v0.3.0...v0.3.1) (2017-04-28)
 

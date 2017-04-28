@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.1"></a>
+## [0.3.1](https://github.com/davewasmer/devcert/compare/v0.3.0...v0.3.1) (2017-04-28)
+
+
+### Bug Fixes
+
+* wrap NSS db dir paths with quotes ([69be0f7](https://github.com/davewasmer/devcert/commit/69be0f7))
+
+
+
 <a name="0.3.0"></a>
 # [0.3.0](https://github.com/davewasmer/devcert/compare/v0.2.20...v0.3.0) (2017-04-28)
 

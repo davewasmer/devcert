@@ -12,7 +12,6 @@ import * as tmp from 'tmp';
 import * as Configstore from 'configstore';
 import * as mkdirp from 'mkdirp';
 import * as createDebug from 'debug';
-import * as eol from 'eol';
 import { sync as commandExists } from 'command-exists';
 
 import {

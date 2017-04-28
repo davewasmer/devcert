@@ -6,6 +6,7 @@ import * as getPort from 'get-port';
 import * as createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import * as glob from 'glob';
+import * as eol from 'eol';
 
 import {
   isMac,

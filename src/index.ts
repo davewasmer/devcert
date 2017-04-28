@@ -140,7 +140,10 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     try {
       // Try to use certutil to install the cert automatically
       debug('adding devcert root CA to firefox');
-      addCertificateToNSSCertDB(path.join(process.env.HOME, 'Library/Application Support/Firefox/Profiles/*'), installCertutil);
+      await addCertificateToNSSCertDB(path.join(process.env.HOME, 'Library/Application Support/Firefox/Profiles/*'), {
+        installCertutil,
+        checkForOpenFirefox: true
+      });
     } catch (e) {
       // Otherwise, open the cert in Firefox to install it
       await openCertificateInFirefox('/Applications/Firefox.app/Contents/MacOS/firefox');
@@ -156,7 +159,10 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     try {
       // Try to use certutil to install the cert automatically
       debug('adding devcert root CA to firefox');
-      addCertificateToNSSCertDB(path.join(process.env.HOME, '.mozilla/firefox/*'), installCertutil);
+      await addCertificateToNSSCertDB(path.join(process.env.HOME, '.mozilla/firefox/*'), {
+        installCertutil,
+        checkForOpenFirefox: true
+      });
     } catch (e) {
       // Otherwise, open the cert in Firefox to install it
       await openCertificateInFirefox('firefox');
@@ -164,7 +170,7 @@ async function addCertificateToTrustStores(installCertutil: boolean): Promise<vo
     // Chrome
     try {
       debug('adding devcert root CA to chrome');
-      addCertificateToNSSCertDB(path.join(process.env.HOME, '.pki/nssdb'), installCertutil);
+      await addCertificateToNSSCertDB(path.join(process.env.HOME, '.pki/nssdb'), { installCertutil });
     } catch (e) {
       console.warn(`
 WARNING: Because you did not pass in \`installCertutil: true\` to devcert, we
@@ -185,10 +191,17 @@ that they are untrusted.`);
 }
 
 // Try to use certutil to add the root cert to an NSS database
-function addCertificateToNSSCertDB(nssDirGlob: string, installCertutil: boolean): void {
-  let certutilPath = lookupOrInstallCertutil(installCertutil);
+async function addCertificateToNSSCertDB(nssDirGlob: string, options: { installCertutil?: boolean, checkForOpenFirefox?: boolean } = {}): Promise<void> {
+  let certutilPath = lookupOrInstallCertutil(options.installCertutil);
   if (!certutilPath) {
     throw new Error('certutil not available, and `installCertutil` was false');
+  }
+  if (options.checkForOpenFirefox) {
+    let runningProcesses = run('ps aux');
+    if (runningProcesses.indexOf('firefox') > -1) {
+      console.log('Please close Firefox before continuing (Press <Enter> when ready)');
+      await waitForUser();
+    }
   }
   debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
   glob.sync(nssDirGlob).forEach((potentialNSSDBDir) => {
@@ -218,8 +231,7 @@ async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
     console.log('See https://github.com/davewasmer/devcert#how-it-works for more details');
     console.log('-- Press <Enter> once you finish the Firefox prompts --');
     exec(`${ firefoxPath } http://localhost:${ port }`);
-    process.stdin.resume();
-    process.stdin.on('data', resolve);
+    waitForUser();
   });
 }
 
@@ -275,4 +287,11 @@ function openssl(cmd: string) {
 function run(cmd: string, options: ExecSyncOptions = {}) {
   debug(`exec: \`${ cmd }\``);
   return execSync(cmd, options);
+}
+
+function waitForUser() {
+  return new Promise((resolve) => {
+    process.stdin.resume();
+    process.stdin.on('data', resolve);
+  });
 }

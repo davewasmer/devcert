@@ -60,6 +60,10 @@ function generateOpenSSLConfFiles() {
   writeFileSync(opensslConfPath, confTemplate);
   writeFileSync(configPath('index.txt'), '');
   writeFileSync(configPath('serial'), '01');
+  // This version number lets us write code in the future that intelligently upgrades an existing
+  // devcert installation. This "ca-version" is independent of the devcert package version, and
+  // tracks changes to the root certificate setup only.
+  writeFileSync(configPath('devcert-ca-version'), '1');
 }
 
 // macOS is pretty simple - just add the certificate to the system keychain, and most applications

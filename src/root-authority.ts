@@ -73,7 +73,7 @@ function generateOpenSSLConfFiles() {
 async function addToMacTrustStores(installCertutil: boolean): Promise<void> {
   // Chrome, Safari, system utils
   debug('adding devcert root CA to macOS system keychain');
-  run(`sudo security add-trusted-cert -r trustRoot -k /Library/Keychains/System.keychain -p ssl "${ rootCertPath }"`);
+  run(`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ rootCertPath }"`);
   // Firefox
   try {
     // Try to use certutil to install the cert automatically

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="0.3.0"></a>
+# [0.3.0](https://github.com/davewasmer/devcert/compare/v0.2.20...v0.3.0) (2017-04-28)
+
+
+### Bug Fixes
+
+* fix waitForUser async usage ([9fd27c5](https://github.com/davewasmer/devcert/commit/9fd27c5))
+
+
+### Features
+
+* add root CA setup versioning ([6c80805](https://github.com/davewasmer/devcert/commit/6c80805))
+
+
+
 <a name="0.2.20"></a>
 ## [0.2.20](https://github.com/davewasmer/devcert/compare/v0.2.19...v0.2.20) (2017-04-28)
 

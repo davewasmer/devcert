@@ -7,48 +7,43 @@ import {
   existsSync
 } from 'fs';
 import * as path from 'path';
-import * as getPort from 'get-port';
-import * as http from 'http';
 import { exec, execSync, ExecSyncOptions } from 'child_process';
 import * as tmp from 'tmp';
-import * as glob from 'glob';
 import * as Configstore from 'configstore';
 import * as mkdirp from 'mkdirp';
 import * as createDebug from 'debug';
 import * as eol from 'eol';
 import { sync as commandExists } from 'command-exists';
 
+import {
+  isMac,
+  isLinux,
+  isWindows,
+  configDir,
+  configPath,
+  opensslConfTemplate,
+  opensslConfPath,
+  rootKeyPath,
+  rootCertPath,
+  caCertsDir
+} from './constants';
+import installCertificateAuthority from './root-authority';
+import { openssl, generateKey } from './utils';
+
 const debug = createDebug('devcert');
 
-const isMac = process.platform === 'darwin';
-const isLinux = process.platform === 'linux';
-const isWindows = process.platform === 'win32';
-
-// use %LOCALAPPDATA%/devcert on Windows otherwise use ~/.config/devcert
-let configDir: string;
-if (isWindows && process.env.LOCALAPPDATA) {
-  configDir = path.join(process.env.LOCALAPPDATA, 'devcert', 'config');
-} else {
-  let uid = process.getuid && process.getuid();
-  let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
-  configDir = path.join(userHome, '.config', 'devcert');
-}
-const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
-
-const opensslConfTemplate = path.join(__dirname, '..', 'openssl.conf');
-const opensslConfPath = configPath('openssl.conf');
-const rootKeyPath = configPath('devcert-ca-root.key');
-const rootCertPath = configPath('devcert-ca-root.crt');
-const caCertsDir = configPath('certs');
-
-mkdirp.sync(configDir);
-mkdirp.sync(caCertsDir);
-
-export interface Options {
-  installCertutil?: boolean;
-}
-
-export default async function devcert(appName: string, options: Options = {}) {
+/**
+ * Request an SSL certificate for the given app name signed by the devcert root certificate
+ * authority. If devcert has previously generated a certificate for that app name on this machine,
+ * it will reuse that certificate.
+ *
+ * If this is the first time devcert is being run on this machine, it will generate and attempt to
+ * install a root certificate authority.
+ *
+ * Returns a promise that resolves with { keyPath, certPath, key, cert }, where `key` and `cert` are
+ * Buffers with the contents of `keyPath` and `certPath`, respectively.
+ */
+export default async function devcert(appName: string, options: { installCertutil?: boolean } = {}) {
   debug(`development cert requested for ${ appName }`);
 
   if (!isMac && !isLinux && !isWindows) {
@@ -83,42 +78,7 @@ export default async function devcert(appName: string, options: Options = {}) {
 
 }
 
-// Install the once-per-machine trusted root CA. We'll use this CA to sign per-app certs, allowing
-// us to minimize the need for elevated permissions while still allowing for per-app certificates.
-async function installCertificateAuthority(installCertutil: boolean): Promise<void> {
-  debug(`generating openssl configuration`);
-  generateOpenSSLConfFiles();
-
-  debug(`generating root certificate authority key`);
-  generateKey(rootKeyPath);
-
-  debug(`generating root certificate authority certificate`);
-  openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
-
-  debug(`adding root certificate authority to trust stores`)
-  await addCertificateToTrustStores(installCertutil);
-}
-
-// Copy our openssl conf template to the local config folder, and update the paths
-// to be OS specific
-function generateOpenSSLConfFiles() {
-  let confTemplate = readFileSync(opensslConfTemplate, 'utf-8');
-  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt').replace(/\\/g, '\\\\'));
-  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial').replace(/\\/g, '\\\\'));
-  confTemplate = eol.auto(confTemplate);
-  writeFileSync(opensslConfPath, confTemplate);
-  writeFileSync(configPath('index.txt'), '');
-  writeFileSync(configPath('serial'), '01');
-}
-
-// Generate a cryptographic key, used to sign certificates or certificate signing requests.
-function generateKey(filename: string): void {
-  debug(`generateKey: ${ filename }`);
-  openssl(`genrsa -out ${ filename } 2048`);
-  chmodSync(filename, 400);
-}
-
-// Generate a certificate signed by the devcert root CA
+// Generate an app certificate signed by the devcert root CA
 function generateSignedCertificate(name: string, keyPath: string): void {
   debug(`generating certificate signing request for ${ name }`);
   let csrFile = configPath(`${ name }.csr`)
@@ -126,172 +86,4 @@ function generateSignedCertificate(name: string, keyPath: string): void {
   debug(`generating certificate for ${ name } from signing request; signing with devcert root CA`);
   let certPath = configPath(`${ name }.crt`);
   openssl(`ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ certPath } -outdir ${ caCertsDir } -keyfile ${ rootKeyPath } -cert ${ rootCertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
-}
-
-// Add the devcert root CA certificate to the trust stores for this machine. Adds to OS level trust
-// stores, and where possible, to browser specific trust stores
-async function addCertificateToTrustStores(installCertutil: boolean): Promise<void> {
-
-  if (isMac) {
-    // Chrome, Safari, system utils
-    debug('adding devcert root CA to macOS system keychain');
-    run(`sudo security add-trusted-cert -r trustRoot -k /Library/Keychains/System.keychain -p ssl "${ rootCertPath }"`);
-    // Firefox
-    try {
-      // Try to use certutil to install the cert automatically
-      debug('adding devcert root CA to firefox');
-      await addCertificateToNSSCertDB(path.join(process.env.HOME, 'Library/Application Support/Firefox/Profiles/*'), {
-        installCertutil,
-        checkForOpenFirefox: true
-      });
-    } catch (e) {
-      // Otherwise, open the cert in Firefox to install it
-      await openCertificateInFirefox('/Applications/Firefox.app/Contents/MacOS/firefox');
-    }
-
-  } else if (isLinux) {
-    // system utils
-    debug('adding devcert root CA to linux system-wide certificates');
-    run(`sudo cp ${ rootCertPath } /etc/ssl/certs/devcert.pem`);
-    run(`sudo cp ${ rootCertPath } /usr/local/share/ca-certificates/devcert.cer`);
-    run(`sudo update-ca-certificates`);
-    // Firefox
-    try {
-      // Try to use certutil to install the cert automatically
-      debug('adding devcert root CA to firefox');
-      await addCertificateToNSSCertDB(path.join(process.env.HOME, '.mozilla/firefox/*'), {
-        installCertutil,
-        checkForOpenFirefox: true
-      });
-    } catch (e) {
-      // Otherwise, open the cert in Firefox to install it
-      await openCertificateInFirefox('firefox');
-    }
-    // Chrome
-    try {
-      debug('adding devcert root CA to chrome');
-      await addCertificateToNSSCertDB(path.join(process.env.HOME, '.pki/nssdb'), { installCertutil });
-    } catch (e) {
-      console.warn(`
-WARNING: Because you did not pass in \`installCertutil: true\` to devcert, we
-are unable to update Chrome to automatically trust generated development
-certificates. The certificates will work, but Chrome will continue to warn you
-that they are untrusted.`);
-    }
-
-  // Windows
-  } else if (isWindows) {
-    // IE, Chrome, system utils
-    debug('adding devcert root to Windows OS trust store')
-    run(`certutil -addstore -user root ${ rootCertPath }`);
-    // Firefox (don't even try NSS certutil, no easy install for Windows)
-    await openCertificateInFirefox('start firefox');
-  }
-
-}
-
-// Try to use certutil to add the root cert to an NSS database
-async function addCertificateToNSSCertDB(nssDirGlob: string, options: { installCertutil?: boolean, checkForOpenFirefox?: boolean } = {}): Promise<void> {
-  let certutilPath = lookupOrInstallCertutil(options.installCertutil);
-  if (!certutilPath) {
-    throw new Error('certutil not available, and `installCertutil` was false');
-  }
-  if (options.checkForOpenFirefox) {
-    let runningProcesses = run('ps aux');
-    if (runningProcesses.indexOf('firefox') > -1) {
-      console.log('Please close Firefox before continuing (Press <Enter> when ready)');
-      await waitForUser();
-    }
-  }
-  debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
-  glob.sync(nssDirGlob).forEach((potentialNSSDBDir) => {
-    debug(`checking to see if ${ potentialNSSDBDir } is a valid NSS database directory`);
-    if (existsSync(path.join(potentialNSSDBDir, 'cert8.db'))) {
-      debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      run(`${ certutilPath } -A -d ${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath } -n devcert`);
-    } else if (existsSync(path.join(potentialNSSDBDir, 'cert9.db'))) {
-      debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
-      run(`${ certutilPath } -A -d sql:${ potentialNSSDBDir } -t 'C,,' -i ${ rootCertPath } -n devcert`);
-    }
-  });
-}
-
-// Launch a web server and open the root cert in Firefox. Useful for when certutil isn't available
-async function openCertificateInFirefox(firefoxPath: string): Promise<void> {
-  debug('adding devert to firefox manually - launch webserver for certificate hosting');
-  let port = await getPort();
-  let server = http.createServer((req, res) => {
-    res.writeHead(200, { 'Content-type': 'application/x-x509-ca-cert' });
-    res.write(readFileSync(rootCertPath));
-    res.end();
-  }).listen(port);
-  debug('certificate is hosted, starting firefox at hosted URL');
-  await new Promise((resolve) => {
-    console.log(`Unable to automatically install SSL certificate - please follow the prompts at http://localhost:${ port } in Firefox to trust the root certificate`);
-    console.log('See https://github.com/davewasmer/devcert#how-it-works for more details');
-    console.log('-- Press <Enter> once you finish the Firefox prompts --');
-    exec(`${ firefoxPath } http://localhost:${ port }`);
-    waitForUser();
-  });
-}
-
-// Try to install certutil if it's not already available, and return the path to the executable
-function lookupOrInstallCertutil(installCertutil: boolean): boolean | string {
-  debug('looking for nss tooling ...')
-  if (isMac) {
-    debug('on mac, looking for homebrew (the only method for install nss supported by devcert');
-    if (commandExists('brew')) {
-      let nssPath: string;
-      let certutilPath: string;
-      try {
-        certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
-      } catch (e) {
-        debug('brew was found, but nss is not installed');
-        if (installCertutil) {
-          debug('attempting to install nss via brew');
-          run('brew install nss');
-          certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
-        } else {
-          return false;
-        }
-      }
-      debug(`Found nss installed at ${ certutilPath }`);
-      return certutilPath;
-    }
-  } else if (isLinux) {
-    debug('on linux, checking is nss is already installed');
-    if (!commandExists('certutil')) {
-      if (installCertutil) {
-        debug('not already installed, installing it ourselves');
-        run('sudo apt install libnss3-tools');
-      } else {
-        debug('not installed and do not want to install');
-        return false;
-      }
-    }
-    debug('looks like nss is installed');
-    return run('which certutil').toString().trim();
-  }
-  return false;
-}
-
-function openssl(cmd: string) {
-  return run(`openssl ${ cmd }`, {
-    stdio: 'ignore',
-    env: Object.assign({
-      RANDFILE: path.join(configPath('.rnd'))
-    }, process.env)
-  });
-}
-
-function run(cmd: string, options: ExecSyncOptions = {}) {
-  debug(`exec: \`${ cmd }\``);
-  return execSync(cmd, options);
-}
-
-function waitForUser() {
-  return new Promise((resolve) => {
-    process.stdin.resume();
-    process.stdin.on('data', resolve);
-  });
 }

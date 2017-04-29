@@ -8,26 +8,19 @@ devcert makes the process easy. Want a private key and certificate file to use
 with your server? Just ask:
 
 ```js
-import { createServer } from 'https';
+import * as https from 'https';
 import * as express from 'express';
 import getDevelopmentCertificate from 'devcert';
 
-async function buildMyApp() {
-  let app = express();
+let app = express();
 
-  app.get('/', function (req, res) {
-    res.send('Hello Secure World!');
-  });
+app.get('/', function (req, res) {
+  res.send('Hello Secure World!');
+});
 
-  let ssl;
-  if (process.env.NODE_ENV === 'development') {
-    ssl = await getDevelopmentCertificate('my-app', { installCertutil: true });
-  } else {
-    ssl = // load production ssl ...
-  }
-
-  return createServer(ssl, app).listen(3000);
-}
+getDevelopmentCertificate('my-app', { installCertutil: true }).then((ssl) => {
+  https.createServer(ssl, app).listen(3000);
+});
 ```
 
 Now open https://localhost:3000 and voila - your page loads with no scary
@@ -38,16 +31,17 @@ warnings or hoops to jump through.
 
 ### installCertutil option
 
-devcert currently takes a single option: `installCertutil`. If true, devcert
-will attempt to install some software necessary to tell Firefox (and Chrome on
-Linux) to trust your development certificates. This is not required, but without
-it, you'll need to tell Firefox to trust these certificates manually:
+ devcert currently takes a single option: `installCertutil`. If true, devcert
+ will attempt to install some software necessary to tell Firefox (and Chrome,
+ only on Linux) to trust your development certificates. This is not required,
+ but without it, you'll need to tell Firefox to trust these certificates
+ manually.
 
-Firefox provides a point-and-click wizard for importing and trusting a
-certificate, so if you don't provide `installCertutil: true` to devcert, we'll
-instead open Firefox and kick off this wizard for you. Simply follow the prompts
-to trust the certificate. **Reminder: you'll only need to do this once per
-machine**
+Thankully, Firefox makes this easy. There's a point-and-click wizard for
+importing and trusting a certificate, so if you don't provide `installCertutil:
+true` to devcert, devcert will instead automatically open Firefox and kick off
+this wizard for you. Simply follow the prompts to trust the certificate.
+**Reminder: you'll only need to do this once per machine**
 
 **Note:** Chrome on Linux **requires** `installCertutil: true`, or else you'll
 face the scary browser warnings every time. Unfortunately, there's no way to
@@ -72,7 +66,12 @@ whenever you want without needing to ask for elevated permissions again. It also
 ensures that browsers won't show scary warnings about untrusted certificates,
 since your OS and browsers will now trust devcert's certificates. The root CA
 certificate is unique to your machine only, and is generated on-the-fly when it
-is installed.
+is first installed.
+
+Once devcert is sure that it has a root certificate authority installed, it will
+create a new SSL certificate & key pair for your app, signed by this root
+certificate authority. Since your browser & OS now trust the root authority,
+they'll trust the certificate for your app - no more scary warnings!
 
 ## License
 

@@ -45,6 +45,8 @@ const debug = createDebug('devcert');
 export default async function devcert(appName: string, options: { installCertutil?: boolean } = {}) {
   debug(`development cert requested for ${ appName }`);
 
+  appName = appName.replace(new RegExp(path.sep, 'g'), '')
+
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`devcert: "${ process.platform }" platform not supported`);
   }

@@ -42,8 +42,8 @@ const debug = createDebug('devcert');
  * Returns a promise that resolves with { keyPath, certPath, key, cert }, where `key` and `cert` are
  * Buffers with the contents of `keyPath` and `certPath`, respectively.
  */
-export default async function devcert(appName: string, options: { installCertutil?: boolean } = {}) {
-  debug(`development cert requested for ${ appName }`);
+export default async function devcert(commonName: string, options: { installCertutil?: boolean } = {}) {
+  debug(`development cert requested for ${ commonName }`);
 
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`devcert: "${ process.platform }" platform not supported`);
@@ -53,18 +53,18 @@ export default async function devcert(appName: string, options: { installCertuti
     throw new Error('Unable to find openssl - make sure it is installed and available in your PATH');
   }
 
-  let appKeyPath = configPath(`${ appName }.key`);
-  let appCertPath = configPath(`${ appName }.crt`);
+  let appKeyPath = configPath(`${ commonName }.key`);
+  let appCertPath = configPath(`${ commonName }.crt`);
 
   if (!existsSync(rootCertPath)) {
     debug('devcert root CA not installed yet, must be first run; installing root CA ...');
     await installCertificateAuthority(options.installCertutil);
   }
 
-  if (!existsSync(configPath(`${ appName }.crt`))) {
-    debug(`first request for ${ appName } cert, generating and caching ...`);
-    generateKey(configPath(`${ appName }.key`));
-    generateSignedCertificate(appName, appKeyPath);
+  if (!existsSync(configPath(`${ commonName }.crt`))) {
+    debug(`first request for ${ commonName } cert, generating and caching ...`);
+    generateKey(configPath(`${ commonName }.key`));
+    generateSignedCertificate(commonName, appKeyPath);
   }
 
   debug(`returning app cert`);
@@ -79,6 +79,7 @@ export default async function devcert(appName: string, options: { installCertuti
 
 // Generate an app certificate signed by the devcert root CA
 function generateSignedCertificate(name: string, keyPath: string): void {
+  process.env.SAN = name;
   debug(`generating certificate signing request for ${ name }`);
   let csrFile = configPath(`${ name }.csr`)
   openssl(`req -config ${ opensslConfPath } -subj "/CN=${ name }" -key ${ keyPath } -out ${ csrFile } -new`);

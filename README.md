@@ -18,7 +18,7 @@ app.get('/', function (req, res) {
   res.send('Hello Secure World!');
 });
 
-getDevelopmentCertificate('my-app', { installCertutil: true }).then((ssl) => {
+getDevelopmentCertificate('localhost', { installCertutil: true }).then((ssl) => {
   https.createServer(ssl, app).listen(3000);
 });
 ```
@@ -27,7 +27,9 @@ Now open https://localhost:3000 and voila - your page loads with no scary
 warnings or hoops to jump through.
 
 > Certificates are cached by name, so two calls for
-`getDevelopmentCertificate('foo')` will return the same key and certificate.
+`getDevelopmentCertificate('foo')` will return the same key and certificate. The
+first argument to `getDevelopmentCertificate` is used as the common name so that
+the certificate can be accessed by `https://foo` as well as `https://localhost`.
 
 ### installCertutil option
 

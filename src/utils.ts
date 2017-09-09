@@ -13,7 +13,8 @@ export function openssl(cmd: string) {
   return run(`openssl ${ cmd }`, {
     stdio: 'ignore',
     env: Object.assign({
-      RANDFILE: path.join(configPath('.rnd'))
+      RANDFILE: path.join(configPath('.rnd')),
+      SAN: "localhost"
     }, process.env)
   });
 }

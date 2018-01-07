@@ -1,5 +1,4 @@
-import { chmodSync } from 'fs';
-import { exec, execSync, ExecSyncOptions } from 'child_process';
+import { execSync, ExecSyncOptions } from 'child_process';
 import * as createDebug from 'debug';
 import * as path from 'path';
 
@@ -7,7 +6,7 @@ import {
   configPath,
 } from './constants';
 
-const debug = createDebug('devcert');
+const debug = createDebug('devcert:util');
 
 export function openssl(cmd: string) {
   return run(`openssl ${ cmd }`, {
@@ -30,9 +29,7 @@ export function waitForUser() {
   });
 }
 
-// Generate a cryptographic key, used to sign certificates or certificate signing requests.
-export function generateKey(filename: string): void {
-  debug(`generateKey: ${ filename }`);
-  openssl(`genrsa -out ${ filename } 2048`);
-  chmodSync(filename, 400);
+
+export function reportableError(message: string) {
+  return new Error(`${message} | This is a bug in devcert, please report the issue at https://github.com/davewasmer/devcert/issues`);
 }

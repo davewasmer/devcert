@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Ha.\" && exit 1",
-    "prepublish": "tsc"
+    "prepublishOnly": "tsc"
   },
   "repository": {
     "type": "git",
@@ -24,25 +24,28 @@
   },
   "homepage": "https://github.com/davewasmer/devcert#readme",
   "devDependencies": {
-    "standard-version": "^4.0.0",
-    "typescript": "^2.2.2"
+    "standard-version": "^4.3.0",
+    "typescript": "^2.6.2"
   },
   "dependencies": {
     "@types/configstore": "^2.1.1",
-    "@types/debug": "^0.0.29",
-    "@types/get-port": "^0.0.4",
-    "@types/glob": "^5.0.30",
-    "@types/mkdirp": "^0.3.29",
-    "@types/node": "^7.0.11",
-    "@types/tmp": "^0.0.32",
+    "@types/debug": "^0.0.30",
+    "@types/get-port": "^3.2.0",
+    "@types/glob": "^5.0.34",
+    "@types/mkdirp": "^0.5.2",
+    "@types/node": "^8.5.7",
+    "@types/rimraf": "^2.0.2",
+    "@types/tmp": "^0.0.33",
+    "application-config-path": "^0.1.0",
     "command-exists": "^1.2.2",
     "configstore": "^3.0.0",
-    "debug": "^2.6.3",
-    "eol": "^0.8.1",
-    "get-port": "^3.0.0",
-    "glob": "^7.1.1",
+    "debug": "^3.1.0",
+    "eol": "^0.9.1",
+    "get-port": "^3.2.0",
+    "glob": "^7.1.2",
     "mkdirp": "^0.5.1",
-    "tmp": "^0.0.31",
-    "tslib": "^1.6.0"
+    "rimraf": "^2.6.2",
+    "tmp": "^0.0.33",
+    "tslib": "^1.8.1"
   }
 }

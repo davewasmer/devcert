@@ -1,15 +1,16 @@
-import { readFileSync as readFile, writeFileSync as writeFile } from 'fs';
+import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import * as createDebug from 'debug';
 import * as eol from 'eol';
+import { fileSync as tmp } from 'tmp';
+import * as keychain from 'keytar';
 
 import {
   isMac,
   isLinux,
   configPath,
-  rootKeyPath,
-  rootCertPath,
   opensslConfPath,
-  opensslConfTemplate
+  opensslConfTemplate,
+  rootCAInstalledFlagFilePath
 } from './constants';
 import addToMacTrustStores from './platforms/macos';
 import addToLinuxTrustStores from './platforms/linux';
@@ -26,6 +27,8 @@ const debug = createDebug('devcert:certificate-authority');
  */
 export default async function installCertificateAuthority(options: Options = {}): Promise<void> {
   debug(`Generating a root certificate authority`);
+  let rootKeyPath = tmp().name;
+  let rootCertPath = tmp().name;
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
   generateOpenSSLConfFiles();
@@ -36,6 +39,8 @@ export default async function installCertificateAuthority(options: Options = {})
   debug(`Generating a CA certificate`);
   openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
 
+  addCertificateAuthorityToSystemKeychain(rootKeyPath, rootCertPath);
+
   debug(`Adding the root certificate authority to trust stores`);
   if (isMac) {
     await addToMacTrustStores(rootCertPath, options);
@@ -44,6 +49,11 @@ export default async function installCertificateAuthority(options: Options = {})
   } else {
     await addToWindowsTrustStores(rootCertPath, options);
   }
+
+  rm(rootKeyPath);
+  rm(rootCertPath);
+
+  writeFile(rootCAInstalledFlagFilePath, '');
 }
 
 /**
@@ -63,4 +73,21 @@ function generateOpenSSLConfFiles() {
   // devcert installation. This "ca-version" is independent of the devcert package version, and
   // tracks changes to the root certificate setup only.
   writeFile(configPath('devcert-ca-version'), '1');
+}
+
+export async function fetchCertificateAuthorityCredentials() {
+  let rootKeyPath = tmp().name;
+  let rootCertPath = tmp().name;
+  let key = await keychain.getPassword('devcert', 'certificate-authority-key');
+  let cert = await keychain.getPassword('devcert', 'certificate-authority-cert');
+  writeFile(rootKeyPath, key);
+  writeFile(rootCertPath, cert);
+  return { rootKeyPath, rootCertPath };
+}
+
+async function addCertificateAuthorityToSystemKeychain(keypath: string, certpath: string) {
+  let key = readFile(keypath, 'utf-8');
+  let cert = readFile(certpath, 'utf-8');
+  await keychain.setPassword('devcert', 'certificate-authority-key', key);
+  await keychain.setPassword('devcert', 'certificate-authority-certificate', cert);
 }

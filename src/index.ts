@@ -7,8 +7,8 @@ import {
   isLinux,
   isWindows,
   pathForDomain,
-  rootCertPath,
-  domainsDir
+  domainsDir,
+  rootCAInstalledFlagFilePath
 } from './constants';
 import installCertificateAuthority from './certificate-authority';
 import generateDomainCertificate from './certificates';
@@ -46,14 +46,14 @@ export async function certificateFor(domain: string, options: Options = {}) {
   let domainKeyPath = pathForDomain(domain, `private-key.key`);
   let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
-  if (!exists(rootCertPath)) {
+  if (!exists(rootCAInstalledFlagFilePath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
   }
 
   if (!exists(pathForDomain(domain, `certificate.crt`))) {
     debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
-    generateDomainCertificate(domain);
+    await generateDomainCertificate(domain);
   }
 
   debug(`Returning domain certificate`);

@@ -16,8 +16,8 @@ export const pathForDomain: (domain: string, ...pathSegments: string[]) => strin
 
 export const opensslConfTemplate = path.join(__dirname, '..', 'openssl.conf');
 export const opensslConfPath = configPath('openssl.conf');
-export const rootKeyPath = configPath('devcert-ca-root.key');
-export const rootCertPath = configPath('devcert-ca-root.crt');
+
+export const rootCAInstalledFlagFilePath = configPath('root-ca-installed');
 
 mkdirp.sync(configDir);
 mkdirp.sync(domainsDir);

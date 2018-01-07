@@ -68,9 +68,9 @@ export default async function addToLinuxTrustStores(certificatePath: string, opt
 }
 
 function isFirefoxInstalled() {
-  exists(FIREFOX_BIN_PATH);
+  return exists(FIREFOX_BIN_PATH);
 }
 
 function isChromeInstalled() {
-  exists(CHROME_BIN_PATH);
+  return exists(CHROME_BIN_PATH);
 }

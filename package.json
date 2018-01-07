@@ -1,11 +1,12 @@
 {
   "name": "devcert",
-  "version": "0.3.2",
+  "version": "1.0.0-beta.1",
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Ha.\" && exit 1",
-    "prepublishOnly": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "echo \"Ha.\" && exit 1"
   },
   "repository": {
     "type": "git",

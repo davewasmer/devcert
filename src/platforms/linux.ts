@@ -44,6 +44,8 @@ export default async function addToLinuxTrustStores(certificatePath: string, opt
         await addCertificateToNSSCertDB(FIREFOX_NSS_DIR, certificatePath, 'certutil');
       }
     }
+  } else {
+    debug('Firefox does not appear to be installed, skipping Firefox-specific steps...');
   }
 
   if (isChromeInstalled()) {
@@ -60,6 +62,8 @@ export default async function addToLinuxTrustStores(certificatePath: string, opt
       await closeFirefox();
       await addCertificateToNSSCertDB(CHROME_NSS_DIR, certificatePath, 'certutil');
     }
+  } else {
+    debug('Chrome does not appear to be installed, skipping Chrome-specific steps...');
   }
 }
 

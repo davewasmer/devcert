@@ -39,6 +39,7 @@ export default async function installCertificateAuthority(options: Options = {})
   debug(`Generating a CA certificate`);
   openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
 
+  debug('Saving certificate authority credentials to system keychain');
   addCertificateAuthorityToSystemKeychain(rootKeyPath, rootCertPath);
 
   debug(`Adding the root certificate authority to trust stores`);
@@ -50,9 +51,11 @@ export default async function installCertificateAuthority(options: Options = {})
     await addToWindowsTrustStores(rootCertPath, options);
   }
 
+  debug('Certificate authority added to trust stores, removing temporary files');
   rm(rootKeyPath);
   rm(rootCertPath);
 
+  debug('Adding flag indicating root certificate authority install');
   writeFile(rootCAInstalledFlagFilePath, '');
 }
 

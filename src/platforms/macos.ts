@@ -45,6 +45,8 @@ export default async function addToMacTrustStores(certificatePath: string, optio
         return await openCertificateInFirefox(FIREFOX_BIN_PATH, certificatePath);
       }
     }
+  } else {
+    debug('Firefox does not appear to be installed, skipping Firefox-specific steps...');
   }
 }
 

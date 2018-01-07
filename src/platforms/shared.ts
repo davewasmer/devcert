@@ -7,6 +7,7 @@ import { sync as glob } from 'glob';
 import { readFileSync as readFile, existsSync as exists } from 'fs';
 import { run, waitForUser } from '../utils';
 import { isMac, isLinux } from '../constants';
+import { execSync as exec } from 'child_process';
 
 const debug = createDebug('devcert:platforms:shared');
 
@@ -56,7 +57,7 @@ async function isFirefoxOpen() {
   // never needs to check this, because it doesn't update the NSS DB
   // automaticaly.
   assert(isMac || isLinux, 'checkForOpenFirefox was invoked on a platform other than Mac or Linux');
-  return run('ps aux').indexOf('firefox') > -1;
+  return exec('ps aux').indexOf('firefox') > -1;
 }
 
 async function sleep(ms: number) {

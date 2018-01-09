@@ -8,7 +8,7 @@ import {
   isWindows,
   pathForDomain,
   domainsDir,
-  rootCAInstalledFlagFilePath
+  rootCAKeyPath
 } from './constants';
 import installCertificateAuthority from './certificate-authority';
 import generateDomainCertificate from './certificates';
@@ -46,7 +46,7 @@ export async function certificateFor(domain: string, options: Options = {}) {
   let domainKeyPath = pathForDomain(domain, `private-key.key`);
   let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
-  if (!exists(rootCAInstalledFlagFilePath)) {
+  if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
   }

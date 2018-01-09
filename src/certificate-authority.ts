@@ -1,8 +1,9 @@
-import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
+import * as crypto from 'crypto';
+import { readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import * as createDebug from 'debug';
 import * as eol from 'eol';
 import { fileSync as tmp } from 'tmp';
-import * as keychain from 'keytar';
+import * as prompt from 'prompt';
 
 import {
   isMac,
@@ -10,7 +11,8 @@ import {
   configPath,
   opensslConfPath,
   opensslConfTemplate,
-  rootCAInstalledFlagFilePath
+  rootCAKeyPath,
+  rootCACertPath,
 } from './constants';
 import addToMacTrustStores from './platforms/macos';
 import addToLinuxTrustStores from './platforms/linux';
@@ -40,7 +42,7 @@ export default async function installCertificateAuthority(options: Options = {})
   openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
 
   debug('Saving certificate authority credentials to system keychain');
-  addCertificateAuthorityToSystemKeychain(rootKeyPath, rootCertPath);
+  saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
 
   debug(`Adding the root certificate authority to trust stores`);
   if (isMac) {
@@ -51,12 +53,6 @@ export default async function installCertificateAuthority(options: Options = {})
     await addToWindowsTrustStores(rootCertPath, options);
   }
 
-  debug('Certificate authority added to trust stores, removing temporary files');
-  rm(rootKeyPath);
-  rm(rootCertPath);
-
-  debug('Adding flag indicating root certificate authority install');
-  writeFile(rootCAInstalledFlagFilePath, '');
 }
 
 /**
@@ -80,19 +76,47 @@ function generateOpenSSLConfFiles() {
 
 export async function fetchCertificateAuthorityCredentials() {
   debug(`Fetching devcert's certificate authority credentials from the system keychain`);
-  let rootKeyPath = tmp().name;
-  let rootCertPath = tmp().name;
-  let key = await keychain.getPassword('devcert', 'certificate-authority-key');
-  let cert = await keychain.getPassword('devcert', 'certificate-authority-certificate');
-  writeFile(rootKeyPath, key);
-  writeFile(rootCertPath, cert);
-  return { rootKeyPath, rootCertPath };
+  let decryptedCAKeyPath = tmp().name;
+  let decryptedCACertPath = tmp().name;
+  let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
+  let encryptedCACert = readFile(rootCACertPath, 'utf-8');
+  let encryptionKey = await getPasswordFromUser();
+  writeFile(decryptedCAKeyPath , decrypt(encryptedCAKey, encryptionKey));
+  writeFile(decryptedCACertPath , decrypt(encryptedCACert, encryptionKey));
+  return { decryptedCAKeyPath , decryptedCACertPath  };
 }
 
-async function addCertificateAuthorityToSystemKeychain(keypath: string, certpath: string) {
+async function saveCertificateAuthorityCredentials(keypath: string, certpath: string) {
   debug(`Adding devcert's certificate authority credentials to the system keychain`);
   let key = readFile(keypath, 'utf-8');
   let cert = readFile(certpath, 'utf-8');
-  await keychain.setPassword('devcert', 'certificate-authority-key', key);
-  await keychain.setPassword('devcert', 'certificate-authority-certificate', cert);
+  let encryptionKey = await getPasswordFromUser();
+  writeFile(rootCAKeyPath, encrypt(key, encryptionKey));
+  writeFile(rootCACertPath, encrypt(cert, encryptionKey));
+}
+
+function getPasswordFromUser(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    prompt.start();
+    prompt.get({
+      properties: {
+        password: {
+          description: 'Password:',
+          hidden: true
+        }
+      }
+    }, (err: Error, result: string) => {
+      err ? reject(err) : resolve(result);
+    });
+  });
+}
+
+function encrypt(text: string, key: string) {
+  let cipher = crypto.createCipher('aes256', key);
+  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+}
+
+function decrypt(encrypted: string, key: string) {
+  let decipher = crypto.createDecipher('aes256', key);
+  return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
 }

@@ -1,6 +1,6 @@
 {
   "name": "devcert",
-  "version": "1.0.0-beta.3",
+  "version": "1.0.0-beta.7",
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",
   "scripts": {
@@ -33,7 +33,6 @@
     "@types/debug": "^0.0.30",
     "@types/get-port": "^3.2.0",
     "@types/glob": "^5.0.34",
-    "@types/keytar": "^4.0.1",
     "@types/mkdirp": "^0.5.2",
     "@types/node": "^8.5.7",
     "@types/rimraf": "^2.0.2",
@@ -45,8 +44,8 @@
     "eol": "^0.9.1",
     "get-port": "^3.2.0",
     "glob": "^7.1.2",
-    "keytar": "^4.1.0",
     "mkdirp": "^0.5.1",
+    "prompt": "^1.0.0",
     "rimraf": "^2.6.2",
     "tmp": "^0.0.33",
     "tslib": "^1.8.1"

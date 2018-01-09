@@ -3,7 +3,7 @@ import { readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import * as createDebug from 'debug';
 import * as eol from 'eol';
 import { fileSync as tmp } from 'tmp';
-import * as prompt from 'prompt';
+import * as inquirer from 'inquirer';
 
 import {
   isMac,
@@ -96,18 +96,13 @@ async function saveCertificateAuthorityCredentials(keypath: string, certpath: st
 }
 
 function getPasswordFromUser(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    prompt.message = 'password';
-    prompt.start();
-    prompt.get({
-      properties: {
-        password: {
-          message: '',
-          hidden: true
-        }
-      }
-    }, (err: Error, { password }: { password: string }) => {
-      err ? reject(err) : resolve(password);
+  return new Promise((resolve) => {
+    inquirer.prompt([{
+      type: 'password',
+      name: 'password',
+      message: 'password:'
+    }], ({ password }: { password: string }) => {
+      resolve(password);
     });
   });
 }

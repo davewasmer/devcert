@@ -43,6 +43,7 @@ export async function addCertificateToNSSCertDB(nssDirGlob: string, certPath: st
 export async function closeFirefox(): Promise<void> {
   if (isFirefoxOpen()) {
     console.log('Please close Firefox before continuing');
+    // LEFT OFF: this appears to not be looping properly
     while(isFirefoxOpen()) {
       await sleep(50);
     }
@@ -52,7 +53,7 @@ export async function closeFirefox(): Promise<void> {
 /**
  * Check if Firefox is currently open
  */
-async function isFirefoxOpen() {
+function isFirefoxOpen() {
   // NOTE: We use some Windows-unfriendly methods here (ps) because Windows
   // never needs to check this, because it doesn't update the NSS DB
   // automaticaly.

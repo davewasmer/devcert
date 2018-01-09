@@ -79,16 +79,18 @@ function generateOpenSSLConfFiles() {
 }
 
 export async function fetchCertificateAuthorityCredentials() {
+  debug(`Fetching devcert's certificate authority credentials from the system keychain`);
   let rootKeyPath = tmp().name;
   let rootCertPath = tmp().name;
   let key = await keychain.getPassword('devcert', 'certificate-authority-key');
-  let cert = await keychain.getPassword('devcert', 'certificate-authority-cert');
+  let cert = await keychain.getPassword('devcert', 'certificate-authority-certificate');
   writeFile(rootKeyPath, key);
   writeFile(rootCertPath, cert);
   return { rootKeyPath, rootCertPath };
 }
 
 async function addCertificateAuthorityToSystemKeychain(keypath: string, certpath: string) {
+  debug(`Adding devcert's certificate authority credentials to the system keychain`);
   let key = readFile(keypath, 'utf-8');
   let cert = readFile(certpath, 'utf-8');
   await keychain.setPassword('devcert', 'certificate-authority-key', key);

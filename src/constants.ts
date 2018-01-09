@@ -1,5 +1,5 @@
 import * as path from 'path';
-import * as mkdirp from 'mkdirp';
+import { sync as mkdirp } from 'mkdirp';
 import applicationConfigPath = require('application-config-path');
 
 // Platform shortcuts
@@ -19,5 +19,5 @@ export const opensslConfPath = configPath('openssl.conf');
 
 export const rootCAInstalledFlagFilePath = configPath('root-ca-installed');
 
-mkdirp.sync(configDir);
-mkdirp.sync(domainsDir);
+mkdirp(configDir);
+mkdirp(domainsDir);

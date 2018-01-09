@@ -23,3 +23,4 @@ export const rootCACertPath = configPath('certificate-authority', 'certificate.c
 
 mkdirp(configDir);
 mkdirp(domainsDir);
+mkdirp(rootCADir);

@@ -75,7 +75,7 @@ function generateOpenSSLConfFiles() {
 }
 
 export async function fetchCertificateAuthorityCredentials() {
-  debug(`Fetching devcert's certificate authority credentials from the system keychain`);
+  debug(`Decrypting devcert's certificate authority credentials`);
   let decryptedCAKeyPath = tmp().name;
   let decryptedCACertPath = tmp().name;
   let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
@@ -87,7 +87,7 @@ export async function fetchCertificateAuthorityCredentials() {
 }
 
 async function saveCertificateAuthorityCredentials(keypath: string, certpath: string) {
-  debug(`Adding devcert's certificate authority credentials to the system keychain`);
+  debug(`Encrypting devcert's certificate authority credentials`);
   let key = readFile(keypath, 'utf-8');
   let cert = readFile(certpath, 'utf-8');
   let encryptionKey = await getPasswordFromUser();
@@ -101,22 +101,22 @@ function getPasswordFromUser(): Promise<string> {
     prompt.get({
       properties: {
         password: {
-          description: 'Password:',
+          message: 'password:',
           hidden: true
         }
       }
-    }, (err: Error, result: string) => {
-      err ? reject(err) : resolve(result);
+    }, (err: Error, { password }: { password: string }) => {
+      err ? reject(err) : resolve(password);
     });
   });
 }
 
 function encrypt(text: string, key: string) {
   let cipher = crypto.createCipher('aes256', key);
-  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+  return cipher.update(new Buffer(text)) + cipher.final('hex');
 }
 
 function decrypt(encrypted: string, key: string) {
   let decipher = crypto.createDecipher('aes256', key);
-  return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
+  return decipher.update(encrypted, 'hex') + decipher.final('utf8');
 }

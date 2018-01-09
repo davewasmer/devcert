@@ -41,7 +41,7 @@ export default async function installCertificateAuthority(options: Options = {})
   debug(`Generating a CA certificate`);
   openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
 
-  debug('Saving certificate authority credentials to system keychain');
+  debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
 
   debug(`Adding the root certificate authority to trust stores`);
@@ -95,16 +95,13 @@ async function saveCertificateAuthorityCredentials(keypath: string, certpath: st
   writeFile(rootCACertPath, encrypt(cert, encryptionKey));
 }
 
-function getPasswordFromUser(): Promise<string> {
-  return new Promise((resolve) => {
-    inquirer.prompt([{
-      type: 'password',
-      name: 'password',
-      message: 'password:'
-    }], ({ password }: { password: string }) => {
-      resolve(password);
-    });
-  });
+async function getPasswordFromUser(): Promise<string> {
+  let { password } = await inquirer.prompt([{
+    type: 'password',
+    name: 'password',
+    message: 'password:'
+  }]);
+  return password;
 }
 
 function encrypt(text: string, key: string) {

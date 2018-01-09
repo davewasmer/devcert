@@ -20,10 +20,10 @@ export async function addCertificateToNSSCertDB(nssDirGlob: string, certPath: st
   glob(nssDirGlob).forEach((potentialNSSDBDir) => {
     debug(`checking to see if ${ potentialNSSDBDir } is a valid NSS database directory`);
     if (exists(path.join(potentialNSSDBDir, 'cert8.db'))) {
-      debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
+      debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding certificate ...`)
       run(`${ certutilPath } -A -d "${ potentialNSSDBDir }" -t 'C,,' -i ${ certPath } -n devcert`);
     } else if (exists(path.join(potentialNSSDBDir, 'cert9.db'))) {
-      debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding devcert ...`)
+      debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding certificate ...`)
       run(`${ certutilPath } -A -d "sql:${ potentialNSSDBDir }" -t 'C,,' -i ${ certPath } -n devcert`);
     } else {
       debug(`${ potentialNSSDBDir } doesn't look like an NSS database directory, skipping ...`);

@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as createDebug from 'debug';
 import { sync as mkdirp } from 'mkdirp';
 import { chmodSync as chmod } from 'fs';
-import { pathForDomain, opensslConfPath } from './constants';
+import { pathForDomain, withDomainSigningRequestConfig, withDomainCertificateConfig } from './constants';
 import { openssl } from './utils';
 import { withCertificateAuthorityCredentials } from './certificate-authority';
 
@@ -24,13 +24,17 @@ export default async function generateDomainCertificate(domain: string): Promise
 
   debug(`Generating certificate signing request for ${ domain }`);
   let csrFile = pathForDomain(domain, `certificate-signing-request.csr`);
-  openssl(`req -config ${ opensslConfPath } -subj "/CN=${ domain }" -key ${ domainKeyPath } -out ${ csrFile } -new`);
+  withDomainSigningRequestConfig(domain, (configpath) => {
+    openssl(`req -new -config ${ configpath } -key ${ domainKeyPath } -out ${ csrFile }`);
+  });
 
   debug(`Generating certificate for ${ domain } from signing request and signing with root CA`);
   let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
   await withCertificateAuthorityCredentials(({ keyPath, certPath }) => {
-    openssl(`ca -config ${ opensslConfPath } -in ${ csrFile } -out "${ path.basename(domainCertPath) }" -outdir ${ path.dirname(certPath) } -keyfile ${ keyPath } -cert ${ certPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
+    withDomainCertificateConfig(domain, (configpath) => {
+      openssl(`ca -config ${ configpath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ keyPath } -cert ${ certPath } -days 7000 -batch -extensions server_cert`)
+    });
   });
 }
 

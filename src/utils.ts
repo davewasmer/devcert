@@ -29,7 +29,6 @@ export function waitForUser() {
   });
 }
 
-
 export function reportableError(message: string) {
   return new Error(`${message} | This is a bug in devcert, please report the issue at https://github.com/davewasmer/devcert/issues`);
 }

@@ -1,18 +1,17 @@
 import * as crypto from 'crypto';
 import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import * as createDebug from 'debug';
-import * as eol from 'eol';
 import { fileSync as tmp } from 'tmp';
 import * as inquirer from 'inquirer';
 
 import {
   isMac,
   isLinux,
-  configPath,
-  opensslConfPath,
-  opensslConfTemplate,
   rootCAKeyPath,
   rootCACertPath,
+  caSelfSignConfig,
+  opensslSerialFilePath,
+  opensslDatabaseFilePath
 } from './constants';
 import addToMacTrustStores from './platforms/macos';
 import addToLinuxTrustStores from './platforms/linux';
@@ -33,13 +32,13 @@ export default async function installCertificateAuthority(options: Options = {})
   let rootCertPath = tmp().name;
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
-  generateOpenSSLConfFiles();
+  seedConfigFiles();
 
   debug(`Generating a private key`);
   generateKey(rootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
+  openssl(`req -new -x509 -config ${ caSelfSignConfig } -key ${ rootKeyPath } -out ${ rootCertPath }`);
 
   debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
@@ -56,22 +55,12 @@ export default async function installCertificateAuthority(options: Options = {})
 }
 
 /**
- * Copy our OpenSSL conf template to the local devcert config folder, and
- * update the paths inside that config file to be OS specific. Also initializes
- * the files OpenSSL needs to sign certificates as a certificate authority
+ * Initializes the files OpenSSL needs to sign certificates as a certificate
+ * authority
  */
-function generateOpenSSLConfFiles() {
-  let confTemplate = readFile(opensslConfTemplate, 'utf-8');
-  confTemplate = confTemplate.replace(/DATABASE_PATH/, configPath('index.txt').replace(/\\/g, '\\\\'));
-  confTemplate = confTemplate.replace(/SERIAL_PATH/, configPath('serial').replace(/\\/g, '\\\\'));
-  confTemplate = eol.auto(confTemplate);
-  writeFile(opensslConfPath, confTemplate);
-  writeFile(configPath('index.txt'), '');
-  writeFile(configPath('serial'), '01');
-  // This version number lets us write code in the future that intelligently upgrades an existing
-  // devcert installation. This "ca-version" is independent of the devcert package version, and
-  // tracks changes to the root certificate setup only.
-  writeFile(configPath('devcert-ca-version'), '1');
+function seedConfigFiles() {
+  writeFile(opensslDatabaseFilePath, '');
+  writeFile(opensslSerialFilePath, '01');
 }
 
 export async function withCertificateAuthorityCredentials(cb: ({ keyPath, certPath }: { keyPath: string, certPath: string }) => Promise<void> | void) {

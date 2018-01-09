@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { readFileSync as readFile, writeFileSync as writeFile } from 'fs';
+import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import * as createDebug from 'debug';
 import * as eol from 'eol';
 import { fileSync as tmp } from 'tmp';
@@ -74,7 +74,7 @@ function generateOpenSSLConfFiles() {
   writeFile(configPath('devcert-ca-version'), '1');
 }
 
-export async function fetchCertificateAuthorityCredentials() {
+export async function withCertificateAuthorityCredentials(cb: ({ keyPath, certPath }: { keyPath: string, certPath: string }) => Promise<void> | void) {
   debug(`Decrypting devcert's certificate authority credentials`);
   let decryptedCAKeyPath = tmp().name;
   let decryptedCACertPath = tmp().name;
@@ -83,7 +83,9 @@ export async function fetchCertificateAuthorityCredentials() {
   let encryptionKey = await getPasswordFromUser();
   writeFile(decryptedCAKeyPath, decrypt(encryptedCAKey, encryptionKey));
   writeFile(decryptedCACertPath, decrypt(encryptedCACert, encryptionKey));
-  return { decryptedCAKeyPath , decryptedCACertPath  };
+  await cb({ keyPath: decryptedCAKeyPath, certPath: decryptedCACertPath });
+  rm(decryptedCAKeyPath);
+  rm(decryptedCACertPath);
 }
 
 async function saveCertificateAuthorityCredentials(keypath: string, certpath: string) {

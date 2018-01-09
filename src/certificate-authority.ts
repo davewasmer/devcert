@@ -42,7 +42,7 @@ export default async function installCertificateAuthority(options: Options = {})
   openssl(`req -config ${ opensslConfPath } -key ${ rootKeyPath } -out ${ rootCertPath } -new -subj "/CN=devcert" -x509 -days 7000 -extensions v3_ca`);
 
   debug('Saving certificate authority credentials to system keychain');
-  saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
+  await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
 
   debug(`Adding the root certificate authority to trust stores`);
   if (isMac) {

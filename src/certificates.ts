@@ -23,11 +23,11 @@ export default async function generateDomainCertificate(domain: string): Promise
   generateKey(keyPath);
 
   debug(`Generating certificate signing request for ${ domain }`);
-  let csrFile = pathForDomain(domain, `${ domain }.csr`);
+  let csrFile = pathForDomain(domain, `certificate-signing-request.csr`);
   openssl(`req -config ${ opensslConfPath } -subj "/CN=${ domain }" -key ${ keyPath } -out ${ csrFile } -new`);
 
   debug(`Generating certificate for ${ domain } from signing request and signing with root CA`);
-  let certPath = pathForDomain(`${ domain }.crt`);
+  let certPath = pathForDomain(domain, `certificate.crt`);
   let { decryptedCAKeyPath, decryptedCACertPath } = await fetchCertificateAuthorityCredentials();
   openssl(`ca -config ${ opensslConfPath } -in ${ csrFile } -out ${ path.basename(certPath) } -outdir ${ path.dirname(certPath) } -keyfile ${ decryptedCAKeyPath } -cert ${ decryptedCACertPath } -notext -md sha256 -days 7000 -batch -extensions server_cert`)
 

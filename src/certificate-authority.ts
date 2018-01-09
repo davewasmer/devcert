@@ -81,8 +81,8 @@ export async function fetchCertificateAuthorityCredentials() {
   let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
   let encryptedCACert = readFile(rootCACertPath, 'utf-8');
   let encryptionKey = await getPasswordFromUser();
-  writeFile(decryptedCAKeyPath , decrypt(encryptedCAKey, encryptionKey));
-  writeFile(decryptedCACertPath , decrypt(encryptedCACert, encryptionKey));
+  writeFile(decryptedCAKeyPath, decrypt(encryptedCAKey, encryptionKey));
+  writeFile(decryptedCACertPath, decrypt(encryptedCACert, encryptionKey));
   return { decryptedCAKeyPath , decryptedCACertPath  };
 }
 
@@ -97,11 +97,12 @@ async function saveCertificateAuthorityCredentials(keypath: string, certpath: st
 
 function getPasswordFromUser(): Promise<string> {
   return new Promise((resolve, reject) => {
+    prompt.message = 'password';
     prompt.start();
     prompt.get({
       properties: {
         password: {
-          message: 'password:',
+          message: '',
           hidden: true
         }
       }
@@ -113,10 +114,10 @@ function getPasswordFromUser(): Promise<string> {
 
 function encrypt(text: string, key: string) {
   let cipher = crypto.createCipher('aes256', key);
-  return cipher.update(new Buffer(text)) + cipher.final('hex');
+  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
 }
 
 function decrypt(encrypted: string, key: string) {
   let decipher = crypto.createDecipher('aes256', key);
-  return decipher.update(encrypted, 'hex') + decipher.final('utf8');
+  return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
 }

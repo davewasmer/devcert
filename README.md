@@ -25,7 +25,8 @@ warnings or hoops to jump through.
 
 If you supply a custom domain name (i.e. any domain other than `localhost`) when requesting a certificate from devcert, it will attempt to modify your system to redirect requests for that domain to your local machine (rather than to the real domain). It does this by modifying your `/etc/hosts` file (or the equivalent file for Windows).
 
-If you pass in the `skipHostsFile` option, devcert will skip this step. This means that if you ask for certificates for `my-app.dev` (for example), and don't have some other DNS redirect method in place, that you won't be able to access your app at `my-app.dev`.
+If you pass in the `skipHostsFile` option, devcert will skip this step. This means that if you ask for certificates for `my-app.test` (for example), and don't have some other DNS redirect method in place, that you won't be able to access your app at `https://my-app.test` because your computer wouldn't know
+that `my-app.test` should resolve your local machine.
 
 ### skipCertutil
 
@@ -45,11 +46,11 @@ The `certutil` tooling is installed in OS-specific ways:
 
 ## How it works
 
-When you ask for a development certificate, devcert will first check to see if it has run on this machine before. If not, it will create a root certificate authority and add it to your OS and various browser trust stores. You'll likely see password prompts from your OS at this point to authorize the new root CA. Once this root CA is trusted by your machine, devcert will safely store the root CA credentials used to sign certificates in the operating system's secret store. This prevents malicious processes from access those keys to generated trusted certificates.
+When you ask for a development certificate, devcert will first check to see if it has run on this machine before. If not, it will create a root certificate authority and add it to your OS and various browser trust stores. You'll likely see password prompts from your OS at this point to authorize the new root CA. Once this root CA is trusted by your machine, devcert will encrypt the root CA credentials used to sign certificates with a user supplied password. This prevents malicious processes from access those keys to generated trusted certificates.
 
-Since your machine now trusts this root CA, it will trust any certificates signed by it. So when you ask for a certificate, devcert will pull the root CA credentials out of the operating system secret storage (triggering a root password as it does). It then uses those credentials to generate a certificate specific to the domain you requested, and returns the new certificate to you.
+Since your machine now trusts this root CA, it will trust any certificates signed by it. So when you ask for a certificate for a new domain, devcert will decrypt the root CA credentials (triggering a password prompt to supply the decryption password as it does). It then uses those root CA credentials to generate a certificate specific to the domain you requested, and returns the new certificate to you. The root CA credentials are momentarily written in plain text to the disk in tmp files, since OpenSSL doesn't support directly supplying them via command line, but they are deleted as soon as the domain-specific certificate is generated.
 
-If you request a domain that has already had certificates generated for it, devcert will simply return the cached certificates - no additional root password prompting needed.
+If you request a domain that has already had certificates generated for it, devcert will simply return the cached certificates - no additional password prompting needed.
 
 This setup ensures that browsers won't show scary warnings about untrusted certificates, since your OS and browsers will now trust devcert's certificates. The root CA certificate is unique to your machine only, is generated on-the-fly when it is first installed, and stored in the system secret storage, so attackers should not be able to compromise it to generate their own certificates.
 

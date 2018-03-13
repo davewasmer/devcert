@@ -1,8 +1,8 @@
-import * as path from 'path';
-import * as createDebug from 'debug';
-import * as assert from 'assert';
-import * as getPort from 'get-port';
-import * as http from 'http';
+import path from 'path';
+import createDebug from 'debug';
+import assert from 'assert';
+import getPort from 'get-port';
+import http from 'http';
 import { sync as glob } from 'glob';
 import { readFileSync as readFile, existsSync as exists } from 'fs';
 import { run, waitForUser } from '../utils';

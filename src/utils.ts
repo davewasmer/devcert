@@ -1,6 +1,6 @@
 import { execSync, ExecSyncOptions } from 'child_process';
-import * as createDebug from 'debug';
-import * as path from 'path';
+import createDebug from 'debug';
+import path from 'path';
 
 import {
   configPath,

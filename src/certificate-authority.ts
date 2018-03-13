@@ -1,8 +1,8 @@
-import * as crypto from 'crypto';
+import crypto from 'crypto';
 import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
-import * as createDebug from 'debug';
+import createDebug from 'debug';
 import { fileSync as tmp } from 'tmp';
-import * as inquirer from 'inquirer';
+import inquirer from 'inquirer';
 
 import {
   isMac,

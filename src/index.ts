@@ -1,7 +1,7 @@
 import { readFileSync as readFile, readdirSync as readdir, existsSync as exists } from 'fs';
-import * as createDebug from 'debug';
+import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import * as rimraf from 'rimraf';
+import rimraf from 'rimraf';
 import {
   isMac,
   isLinux,

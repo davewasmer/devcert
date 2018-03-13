@@ -1,6 +1,6 @@
-import * as path from 'path';
+import path from 'path';
 import { existsSync as exists } from 'fs';
-import * as createDebug from 'debug';
+import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { run } from '../utils';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';

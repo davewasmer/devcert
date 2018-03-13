@@ -1,10 +1,10 @@
-import * as path from 'path';
+import path from 'path';
 import { unlinkSync as rm, writeFileSync as writeFile, readFileSync as readFile } from 'fs';
 import { sync as mkdirp } from 'mkdirp';
 import { fileSync as tmp } from 'tmp';
 import { template as makeTemplate } from 'lodash';
 import applicationConfigPath = require('application-config-path');
-import * as eol from 'eol';
+import eol from 'eol';
 
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';

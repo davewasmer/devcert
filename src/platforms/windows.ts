@@ -1,4 +1,4 @@
-import * as createDebug from 'debug';
+import createDebug from 'debug';
 import { run } from '../utils';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';

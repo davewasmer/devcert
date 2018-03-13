@@ -19,17 +19,7 @@ export function openssl(cmd: string) {
 
 export function run(cmd: string, options: ExecSyncOptions = {}) {
   debug(`exec: \`${ cmd }\``);
-  try {
-    return execSync(cmd, options);
-  } catch (e) {
-    console.error('======> Command failed:');
-    console.error(cmd);
-    console.error('======> stdout:');
-    console.error(e.stdout.toString());
-    console.error('======> stderr:');
-    console.error(e.stderr.toString());
-    throw e;
-  }
+  return execSync(cmd, options);
 }
 
 export function waitForUser() {

@@ -32,14 +32,10 @@ export default async function generateDomainCertificate(domain: string): Promise
   debug(`Generating certificate for ${ domain } from signing request and signing with root CA`);
   let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
-  await withCertificateAuthorityCredentials(({ keyPath, certPath }) => {
-    withDomainCertificateConfig(domain, (configpath) => {
-      assert(exists(configpath), `config file doesn't seem to exist: ${ configpath }`);
-      assert(exists(keyPath), `ca key file doesn't seem to exist: ${ keyPath }`);
-      assert(exists(certPath), `ca cert file doesn't seem to exist: ${ certPath }`);
-      assert(exists(pathForDomain(domain)), `domain folder doesn't seem to exist: ${ pathForDomain(domain) }`);
-      assert(exists(csrFile), `csr file doesn't seem to exist: ${ csrFile }`);
-      openssl(`ca -config ${ configpath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ keyPath } -cert ${ certPath } -days 7000 -batch -extensions server_cert`)
+  await withCertificateAuthorityCredentials(({ caKeyPath, caCertPath }) => {
+    withDomainCertificateConfig(domain, (domainCertConfigPath) => {
+      // openssl(`ca -config ${ domainCertConfigPath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ caKeyPath } -cert ${ caCertPath } -days 7000 -batch -extensions server_cert`)
+      openssl(`x509 -req -CA ${ caCertPath } -CAkey ${ caKeyPath } -CAcreateserial -in ${ csrFile } -out ${ domainCertPath } -days 7000 -sha256`);
     });
   });
 }

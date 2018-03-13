@@ -24,9 +24,9 @@ export function run(cmd: string, options: ExecSyncOptions = {}) {
   } catch (e) {
     console.error(`======> Command failed: ${ cmd }`);
     console.error('======> stdout:');
-    console.error(e.stderr.toString());
+    console.error(e.stdout && e.stdout.toString());
     console.error('======> stderr:');
-    console.error(e.stderr.toString());
+    console.error(e.stderr && e.stderr.toString());
     throw e;
   }
 }

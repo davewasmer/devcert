@@ -1,7 +1,8 @@
-import * as path from 'path';
-import * as createDebug from 'debug';
+import path from 'path';
+import createDebug from 'debug';
+import assert from 'assert';
 import { sync as mkdirp } from 'mkdirp';
-import { chmodSync as chmod } from 'fs';
+import { chmodSync as chmod, existsSync as exists } from 'fs';
 import { pathForDomain, withDomainSigningRequestConfig, withDomainCertificateConfig } from './constants';
 import { openssl } from './utils';
 import { withCertificateAuthorityCredentials } from './certificate-authority';
@@ -33,6 +34,11 @@ export default async function generateDomainCertificate(domain: string): Promise
 
   await withCertificateAuthorityCredentials(({ keyPath, certPath }) => {
     withDomainCertificateConfig(domain, (configpath) => {
+      assert(exists(configpath), `config file doesn't seem to exist: ${ configpath }`);
+      assert(exists(keyPath), `ca key file doesn't seem to exist: ${ keyPath }`);
+      assert(exists(certPath), `ca cert file doesn't seem to exist: ${ certPath }`);
+      assert(exists(pathForDomain(domain)), `domain folder doesn't seem to exist: ${ pathForDomain(domain) }`);
+      assert(exists(csrFile), `csr file doesn't seem to exist: ${ csrFile }`);
       openssl(`ca -config ${ configpath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ keyPath } -cert ${ certPath } -days 7000 -batch -extensions server_cert`)
     });
   });

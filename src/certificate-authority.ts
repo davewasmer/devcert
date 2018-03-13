@@ -65,8 +65,8 @@ function seedConfigFiles() {
 
 export async function withCertificateAuthorityCredentials(cb: ({ keyPath, certPath }: { keyPath: string, certPath: string }) => Promise<void> | void) {
   debug(`Decrypting devcert's certificate authority credentials`);
-  let decryptedCAKeyPath = tmp().name;
-  let decryptedCACertPath = tmp().name;
+  let decryptedCAKeyPath = tmp({ unsafeCleanup: false }).name;
+  let decryptedCACertPath = tmp({ unsafeCleanup: false }).name;
   let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
   let encryptedCACert = readFile(rootCACertPath, 'utf-8');
   let encryptionKey = await getPasswordFromUser();

@@ -33,7 +33,7 @@ export function withDomainSigningRequestConfig(domain: string, cb: (filepath: st
 }
 
 export function withDomainCertificateConfig(domain: string, cb: (filepath: string) => void) {
-  let tmpFile = tmp().name;
+  let tmpFile = tmp({ unsafeCleanup: false }).name;
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({

@@ -19,7 +19,13 @@ export function openssl(cmd: string) {
 
 export function run(cmd: string, options: ExecSyncOptions = {}) {
   debug(`exec: \`${ cmd }\``);
-  return execSync(cmd, options);
+  try {
+    return execSync(cmd, options);
+  } catch (e) {
+    console.log('======> Command failed:');
+    console.log(e.message);
+    throw e;
+  }
 }
 
 export function waitForUser() {

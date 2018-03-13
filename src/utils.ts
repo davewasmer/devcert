@@ -10,7 +10,7 @@ const debug = createDebug('devcert:util');
 
 export function openssl(cmd: string) {
   return run(`openssl ${ cmd }`, {
-    stdio: 'ignore',
+    stdio: 'pipe',
     env: Object.assign({
       RANDFILE: path.join(configPath('.rnd'))
     }, process.env)
@@ -22,11 +22,12 @@ export function run(cmd: string, options: ExecSyncOptions = {}) {
   try {
     return execSync(cmd, options);
   } catch (e) {
-    console.error(`======> Command failed: ${ cmd }`);
+    console.error('======> Command failed:');
+    console.error(cmd);
     console.error('======> stdout:');
-    console.error(e.stdout && e.stdout.toString());
+    console.error(e.stdout.toString());
     console.error('======> stderr:');
-    console.error(e.stderr && e.stderr.toString());
+    console.error(e.stderr.toString());
     throw e;
   }
 }

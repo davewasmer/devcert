@@ -1,4 +1,4 @@
-import path from 'path';
+// import path from 'path';
 import createDebug from 'debug';
 import { sync as mkdirp } from 'mkdirp';
 import { chmodSync as chmod } from 'fs';
@@ -33,7 +33,7 @@ export default async function generateDomainCertificate(domain: string): Promise
 
   await withCertificateAuthorityCredentials(({ caKeyPath, caCertPath }) => {
     withDomainCertificateConfig(domain, (domainCertConfigPath) => {
-      openssl(`ca -config ${ domainCertConfigPath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ caKeyPath } -cert ${ caCertPath } -days 7000 -batch`)
+      openssl(`ca -config ${ domainCertConfigPath } -in ${ csrFile } -out ${ domainCertPath } -keyfile ${ caKeyPath } -cert ${ caCertPath } -days 7000 -batch`)
     });
   });
 }

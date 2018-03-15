@@ -63,7 +63,7 @@ function seedConfigFiles() {
   writeFile(opensslSerialFilePath, '01');
 }
 
-export async function withCertificateAuthorityCredentials(cb: ({ keyPath, certPath }: { keyPath: string, certPath: string }) => Promise<void> | void) {
+export async function withCertificateAuthorityCredentials(cb: ({ caKeyPath, caCertPath }: { caKeyPath: string, caCertPath: string }) => Promise<void> | void) {
   debug(`Decrypting devcert's certificate authority credentials`);
   let decryptedCAKeyPath = tmp().name;
   let decryptedCACertPath = tmp().name;
@@ -72,7 +72,7 @@ export async function withCertificateAuthorityCredentials(cb: ({ keyPath, certPa
   let encryptionKey = await getPasswordFromUser();
   writeFile(decryptedCAKeyPath, decrypt(encryptedCAKey, encryptionKey));
   writeFile(decryptedCACertPath, decrypt(encryptedCACert, encryptionKey));
-  await cb({ keyPath: decryptedCAKeyPath, certPath: decryptedCACertPath });
+  await cb({ caKeyPath: decryptedCAKeyPath, caCertPath: decryptedCACertPath });
   rm(decryptedCAKeyPath);
   rm(decryptedCACertPath);
 }

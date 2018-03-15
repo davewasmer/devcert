@@ -1,8 +1,6 @@
-import path from 'path';
 import createDebug from 'debug';
-import assert from 'assert';
 import { sync as mkdirp } from 'mkdirp';
-import { chmodSync as chmod, existsSync as exists } from 'fs';
+import { chmodSync as chmod } from 'fs';
 import { pathForDomain, withDomainSigningRequestConfig, withDomainCertificateConfig } from './constants';
 import { openssl } from './utils';
 import { withCertificateAuthorityCredentials } from './certificate-authority';

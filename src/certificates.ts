@@ -33,8 +33,7 @@ export default async function generateDomainCertificate(domain: string): Promise
 
   await withCertificateAuthorityCredentials(({ caKeyPath, caCertPath }) => {
     withDomainCertificateConfig(domain, (domainCertConfigPath) => {
-      openssl(`ca -config ${ domainCertConfigPath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ caKeyPath } -cert ${ caCertPath } -days 7000 -batch -extensions server_cert`)
-      // openssl(`x509 -req -CA ${ caCertPath } -CAkey ${ caKeyPath } -CAcreateserial -in ${ csrFile } -out ${ domainCertPath } -days 7000 -sha256`);
+      openssl(`ca -config ${ domainCertConfigPath } -in ${ csrFile } -out ${ path.basename(domainCertPath) } -keyfile ${ caKeyPath } -cert ${ caCertPath } -days 7000 -batch`)
     });
   });
 }

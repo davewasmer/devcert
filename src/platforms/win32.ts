@@ -1,7 +1,7 @@
 import createDebug from 'debug';
 import { readFileSync as read } from 'fs';
 import sudoPrompt from 'sudo-prompt';
-import { run } from '../utils';
+// import { run } from '../utils';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';

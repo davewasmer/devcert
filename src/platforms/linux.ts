@@ -30,9 +30,9 @@ export default class LinuxPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
 
     debug('Adding devcert root CA to Linux system-wide trust stores');
-    run(`sudo cp ${ certificatePath } /etc/ssl/certs/devcert.pem`);
-    run(`sudo cp ${ certificatePath } /usr/local/share/ca-certificates/devcert.cer`);
-    run(`sudo bash -c "cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt"`);
+    // run(`sudo cp ${ certificatePath } /etc/ssl/certs/devcert.crt`);
+    run(`sudo cp ${ certificatePath } /usr/local/share/ca-certificates/devcert.crt`);
+    // run(`sudo bash -c "cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt"`);
     run(`sudo update-ca-certificates`);
 
     if (this.isFirefoxInstalled()) {

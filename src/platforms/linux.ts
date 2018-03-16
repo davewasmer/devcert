@@ -2,6 +2,7 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
+import { exec as sudo } from 'sudo-prompt';
 import { run } from '../utils';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { Options } from '../index';
@@ -76,7 +77,7 @@ export default class LinuxPlatform implements Platform {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for sudo
-      run(`echo "${ domain }  127.0.0.1" >> ${ this.HOST_FILE_PATH }`);
+      sudo(`bash -c "echo '${ domain }  127.0.0.1' >> ${ this.HOST_FILE_PATH }"`, { name: 'devcert' });
     }
   }
 

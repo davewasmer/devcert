@@ -10,6 +10,7 @@ import {
   domainsDir,
   rootCAKeyPath
 } from './constants';
+import currentPlatform from './platforms';
 import installCertificateAuthority from './certificate-authority';
 import generateDomainCertificate from './certificates';
 
@@ -54,6 +55,10 @@ export async function certificateFor(domain: string, options: Options = {}) {
   if (!exists(pathForDomain(domain, `certificate.crt`))) {
     debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
     await generateDomainCertificate(domain);
+  }
+
+  if (!options.skipHostsFile) {
+    currentPlatform.addDomainToHostFileIfMissing(domain);
   }
 
   debug(`Returning domain certificate`);

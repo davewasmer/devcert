@@ -5,17 +5,13 @@ import { fileSync as tmp } from 'tmp';
 import inquirer from 'inquirer';
 
 import {
-  isMac,
-  isLinux,
   rootCAKeyPath,
   rootCACertPath,
   caSelfSignConfig,
   opensslSerialFilePath,
   opensslDatabaseFilePath
 } from './constants';
-import addToMacTrustStores from './platforms/macos';
-import addToLinuxTrustStores from './platforms/linux';
-import addToWindowsTrustStores from './platforms/windows';
+import currentPlatform from './platforms';
 import { openssl } from './utils';
 import { generateKey } from './certificates';
 import { Options } from './index';
@@ -44,14 +40,7 @@ export default async function installCertificateAuthority(options: Options = {})
   await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
 
   debug(`Adding the root certificate authority to trust stores`);
-  if (isMac) {
-    await addToMacTrustStores(rootCertPath, options);
-  } else if (isLinux) {
-    await addToLinuxTrustStores(rootCertPath, options);
-  } else {
-    await addToWindowsTrustStores(rootCertPath, options);
-  }
-
+  await currentPlatform.addToTrustStores(rootCertPath, options);
 }
 
 /**

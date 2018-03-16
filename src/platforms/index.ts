@@ -6,5 +6,5 @@ export interface Platform {
    addDomainToHostFileIfMissing(domain: string): void;
 }
 
-const PlatformClass = require(`./${ process.platform }`);
+const PlatformClass = require(`./${ process.platform }`).default;
 export default new PlatformClass() as Platform;

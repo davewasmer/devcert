@@ -32,7 +32,7 @@ export default class LinuxPlatform implements Platform {
     debug('Adding devcert root CA to Linux system-wide trust stores');
     run(`sudo cp ${ certificatePath } /etc/ssl/certs/devcert.pem`);
     run(`sudo cp ${ certificatePath } /usr/local/share/ca-certificates/devcert.cer`);
-    run(`sudo cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt`);
+    run(`sudo bash -c "cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt"`);
     run(`sudo update-ca-certificates`);
 
     if (this.isFirefoxInstalled()) {
@@ -76,7 +76,7 @@ export default class LinuxPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      run(`sudo echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }`);
+      run(`sudo bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
     }
   }
 

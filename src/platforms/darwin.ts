@@ -2,7 +2,7 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { sudo, run } from '../utils';
+import { run } from '../utils';
 import { Options } from '../index';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { Platform } from '.';
@@ -29,7 +29,7 @@ export default class MacOSPlatform implements Platform {
 
     // Chrome, Safari, system utils
     debug('Adding devcert root CA to macOS system keychain');
-    sudo(`security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ certificatePath }"`);
+    run(`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ certificatePath }"`);
 
     if (this.isFirefoxInstalled()) {
       // Try to use certutil to install the cert automatically
@@ -60,7 +60,7 @@ export default class MacOSPlatform implements Platform {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for sudo
-      await sudo(`bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
+      run(`sudo echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }`);
     }
   }
 

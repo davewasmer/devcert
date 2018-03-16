@@ -3,7 +3,7 @@ import { existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
-import { sudo } from '../utils';
+import { run } from '../utils';
 import { Options } from '../index';
 import { Platform } from '.';
 
@@ -30,10 +30,10 @@ export default class LinuxPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
 
     debug('Adding devcert root CA to Linux system-wide trust stores');
-    await sudo(`cp ${ certificatePath } /etc/ssl/certs/devcert.pem`);
-    await sudo(`cp ${ certificatePath } /usr/local/share/ca-certificates/devcert.cer`);
-    await sudo(`bash -c "cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt"`);
-    await sudo(`update-ca-certificates`);
+    run(`sudo cp ${ certificatePath } /etc/ssl/certs/devcert.pem`);
+    run(`sudo cp ${ certificatePath } /usr/local/share/ca-certificates/devcert.cer`);
+    run(`sudo cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt`);
+    run(`sudo update-ca-certificates`);
 
     if (this.isFirefoxInstalled()) {
       // Firefox
@@ -44,7 +44,7 @@ export default class LinuxPlatform implements Platform {
           openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
         } else {
           debug('NSS tooling is not already installed. Trying to install NSS tooling now with `apt install`');
-          await sudo('apt install libnss3-tools');
+          run('sudo apt install libnss3-tools');
           debug('Installing certificate into Firefox trust stores using NSS tooling');
           await closeFirefox();
           await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, 'certutil');
@@ -76,7 +76,7 @@ export default class LinuxPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      await sudo(`bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
+      run(`sudo echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }`);
     }
   }
 

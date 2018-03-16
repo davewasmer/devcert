@@ -1,7 +1,6 @@
 import { execSync, ExecSyncOptions } from 'child_process';
 import createDebug from 'debug';
 import path from 'path';
-import sudoPrompt from 'sudo-prompt';
 
 import {
   configPath,
@@ -21,18 +20,6 @@ export function openssl(cmd: string) {
 export function run(cmd: string, options: ExecSyncOptions = {}) {
   debug(`exec: \`${ cmd }\``);
   return execSync(cmd, options);
-}
-
-export function sudo(cmd: string) {
-  return new Promise((resolve, reject) => {
-    sudoPrompt.exec(cmd, (error: Error, stdout: string, stderr: string) => {
-      if (error) {
-        reject(error);
-      } else {
-        resolve(stdout);
-      }
-    });
-  });
 }
 
 export function waitForUser() {

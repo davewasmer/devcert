@@ -2,8 +2,7 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { exec as sudo } from 'sudo-prompt';
-import { run } from '../utils';
+import { sudo, run } from '../utils';
 import { Options } from '../index';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { Platform } from '.';
@@ -30,7 +29,7 @@ export default class MacOSPlatform implements Platform {
 
     // Chrome, Safari, system utils
     debug('Adding devcert root CA to macOS system keychain');
-    run(`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ certificatePath }"`);
+    sudo(`security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ certificatePath }"`);
 
     if (this.isFirefoxInstalled()) {
       // Try to use certutil to install the cert automatically
@@ -57,11 +56,11 @@ export default class MacOSPlatform implements Platform {
     }
   }
 
-  addDomainToHostFileIfMissing(domain: string) {
+  async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for sudo
-      sudo(`bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`, { name: 'devcert' });
+      await sudo(`bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
     }
   }
 

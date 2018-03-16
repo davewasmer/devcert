@@ -58,7 +58,7 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   if (!options.skipHostsFile) {
-    currentPlatform.addDomainToHostFileIfMissing(domain);
+    await currentPlatform.addDomainToHostFileIfMissing(domain);
   }
 
   debug(`Returning domain certificate`);

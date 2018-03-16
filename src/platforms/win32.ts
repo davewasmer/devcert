@@ -1,5 +1,6 @@
 import createDebug from 'debug';
 import { readFileSync as read } from 'fs';
+import { exec as sudo } from 'sudo-prompt';
 import { run } from '../utils';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
@@ -31,7 +32,7 @@ export default class WindowsPlatform implements Platform {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for sudo
-      run(`echo "${ domain }  127.0.0.1" > ${ this.HOST_FILE_PATH }`);
+      sudo(`bash -c "echo '127.0.0.1  ${ domain }' > ${ this.HOST_FILE_PATH }"`, { name: 'devcert' });
     }
   }
 

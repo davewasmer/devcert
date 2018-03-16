@@ -77,7 +77,7 @@ export default class LinuxPlatform implements Platform {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for sudo
-      sudo(`bash -c "echo '${ domain }  127.0.0.1' >> ${ this.HOST_FILE_PATH }"`, { name: 'devcert' });
+      sudo(`bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`, { name: 'devcert' });
     }
   }
 

@@ -1,6 +1,6 @@
 import createDebug from 'debug';
+import elevator from 'elevator';
 import { readFileSync as read } from 'fs';
-// import sudoPrompt from 'sudo-prompt';
 import { run } from '../utils';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
@@ -10,7 +10,7 @@ const debug = createDebug('devcert:platforms:windows');
 
 // function sudo(cmd: string) {
 //   return new Promise((resolve, reject) => {
-//     sudoPrompt.exec(cmd, (err: Error, stdout: string) => {
+//     elevator.executeSync(cmd, (err: Error, stdout: string) => {
 //       if (err) {
 //         reject(err);
 //       } else {
@@ -35,7 +35,7 @@ export default class WindowsPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
-    await run(`certutil -addstore -user root ${ certificatePath }`);
+    elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`);
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);
   }
@@ -44,7 +44,7 @@ export default class WindowsPlatform implements Platform {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
       // Shell out to append the file so the subshell can prompt for privileges
-      await run(`echo '127.0.0.1  ${ domain }' > ${ this.HOST_FILE_PATH }`);
+      elevator.executeSync(`echo '127.0.0.1  ${ domain }' > ${ this.HOST_FILE_PATH }`);
     }
   }
 

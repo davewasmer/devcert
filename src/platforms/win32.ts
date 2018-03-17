@@ -1,24 +1,11 @@
 import createDebug from 'debug';
 import elevator from 'elevator';
-import { readFileSync as read } from 'fs';
-import { run } from '../utils';
+import { readFileSync as read, copyFileSync as copy } from 'fs';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
 
 const debug = createDebug('devcert:platforms:windows');
-
-// function sudo(cmd: string) {
-//   return new Promise((resolve, reject) => {
-//     elevator.executeSync(cmd, (err: Error, stdout: string) => {
-//       if (err) {
-//         reject(err);
-//       } else {
-//         resolve(stdout);
-//       }
-//     })
-//   });
-// }
 
 export default class WindowsPlatform implements Platform {
 
@@ -35,7 +22,9 @@ export default class WindowsPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
+    copy(certificatePath, './certificate.cert');
     elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`);
+    debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);
   }

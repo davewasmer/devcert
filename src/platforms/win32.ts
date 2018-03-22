@@ -24,7 +24,7 @@ export default class WindowsPlatform implements Platform {
     debug('adding devcert root to Windows OS trust store')
     copy(certificatePath, './certificate.cert');
     try {
-      elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`);
+      elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`.split(' '));
     } catch (e) {
       debug('unable to add certificate to system trust store: %o', e);
       throw e;

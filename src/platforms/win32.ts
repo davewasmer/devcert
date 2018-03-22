@@ -23,7 +23,12 @@ export default class WindowsPlatform implements Platform {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
     copy(certificatePath, './certificate.cert');
-    elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`);
+    try {
+      elevator.executeSync(`certutil -addstore -user root ${ certificatePath }`);
+    } catch (e) {
+      debug('unable to add certificate to system trust store: %o', e);
+      throw e;
+    }
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);

@@ -1,6 +1,6 @@
 declare module "command-exists";
 declare module "eol";
-declare module "elevator";
+declare module "sudo-prompt";
 declare module "application-config-path" {
   export = (appName: string) => string;
 }

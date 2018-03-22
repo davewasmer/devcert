@@ -50,10 +50,9 @@
     "lodash": "^4.17.4",
     "mkdirp": "^0.5.1",
     "rimraf": "^2.6.2",
+    "sudo-prompt": "^8.2.0",
     "tmp": "^0.0.33",
     "tslib": "^1.8.1"
   },
-  "optionalDependencies": {
-    "elevator": "^2.2.3"
-  }
+  "optionalDependencies": {}
 }

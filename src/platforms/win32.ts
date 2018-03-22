@@ -22,8 +22,8 @@ export default class WindowsPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
-    await this.sudo(`certutil -addstore -user root ${ certificatePath }`);
     copy(certificatePath, './certificate.cert');
+    await this.sudo(`certutil -addstore -user root ${ certificatePath }`);
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);

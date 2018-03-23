@@ -24,7 +24,15 @@ export default class WindowsPlatform implements Platform {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
     // await this.sudo(`certutil -addstore -user root ${ certificatePath }`);
-    run(`certutil -addstore -user root ${ certificatePath }`);
+    try {
+      run(`certutil -addstore -user root ${ certificatePath }`);
+    } catch (e) {
+      e.output.map((buffer: Buffer) => {
+        if (buffer) {
+          console.log(buffer.toString);
+        }
+      });
+    }
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);

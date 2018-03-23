@@ -1,6 +1,7 @@
 import createDebug from 'debug';
 import sudoPrompt from 'sudo-prompt';
-import { readFileSync as read } from 'fs';
+import { copyFileSync as copy, readFileSync as read } from 'fs';
+import { fileSync as tmp } from 'tmp';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
@@ -23,9 +24,11 @@ export default class WindowsPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
-    // await this.sudo(`certutil -addstore -user root ${ certificatePath }`);
+    let certificateCopy = tmp().name;
+    // Copy the certificate to avoid "file in use" errors
+    copy(certificatePath, certificateCopy);
     try {
-      run(`certutil -addstore -user root ${ certificatePath }`);
+      run(`certutil -addstore -user root ${ certificateCopy }`);
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {

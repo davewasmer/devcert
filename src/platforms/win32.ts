@@ -29,7 +29,7 @@ export default class WindowsPlatform implements Platform {
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {
-          console.log(buffer.toString);
+          console.log(buffer.toString());
         }
       });
     }

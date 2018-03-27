@@ -1,7 +1,6 @@
 import createDebug from 'debug';
 import sudoPrompt from 'sudo-prompt';
-import { unlinkSync as rm, copyFileSync as copy, readFileSync as read } from 'fs';
-import { fileSync as tmp } from 'tmp';
+import { readFileSync as read } from 'fs';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
@@ -24,14 +23,8 @@ export default class WindowsPlatform implements Platform {
   async addToTrustStores(certificatePath: string, options: Options = {}): Promise<void> {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
-    let certificateCopy = tmp().name;
-    // Copy the certificate to avoid "file in use" errors
-    copy(certificatePath, certificateCopy);
-    debug('sleeping for 30s to see if that releases the cert file')
-    // Sleep for 30s
-    await new Promise((resolve) => setTimeout(resolve, 30000));
     try {
-      run(`certutil -addstore -user root ${ certificateCopy }`);
+      run(`certutil -addstore -user root ${ certificatePath }`);
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {
@@ -39,7 +32,6 @@ export default class WindowsPlatform implements Platform {
         }
       });
     }
-    rm(certificateCopy);
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
     await openCertificateInFirefox('start firefox', certificatePath);

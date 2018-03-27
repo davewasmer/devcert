@@ -1,7 +1,6 @@
 import crypto from 'crypto';
 import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
-import { fileSync as tmp } from 'tmp';
 import inquirer from 'inquirer';
 
 import {
@@ -12,7 +11,7 @@ import {
   opensslDatabaseFilePath
 } from './constants';
 import currentPlatform from './platforms';
-import { openssl } from './utils';
+import { openssl, mktmp } from './utils';
 import { generateKey } from './certificates';
 import { Options } from './index';
 
@@ -24,8 +23,8 @@ const debug = createDebug('devcert:certificate-authority');
  */
 export default async function installCertificateAuthority(options: Options = {}): Promise<void> {
   debug(`Generating a root certificate authority`);
-  let rootKeyPath = tmp().name;
-  let rootCertPath = tmp().name;
+  let rootKeyPath = mktmp();
+  let rootCertPath = mktmp();
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
   seedConfigFiles();
@@ -54,8 +53,8 @@ function seedConfigFiles() {
 
 export async function withCertificateAuthorityCredentials(cb: ({ caKeyPath, caCertPath }: { caKeyPath: string, caCertPath: string }) => Promise<void> | void) {
   debug(`Decrypting devcert's certificate authority credentials`);
-  let decryptedCAKeyPath = tmp().name;
-  let decryptedCACertPath = tmp().name;
+  let decryptedCAKeyPath = mktmp();
+  let decryptedCACertPath = mktmp();
   let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
   let encryptedCACert = readFile(rootCACertPath, 'utf-8');
   let encryptionKey = await getPasswordFromUser();

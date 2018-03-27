@@ -1,10 +1,10 @@
 import path from 'path';
 import { unlinkSync as rm, writeFileSync as writeFile, readFileSync as readFile } from 'fs';
 import { sync as mkdirp } from 'mkdirp';
-import { fileSync as tmp } from 'tmp';
 import { template as makeTemplate } from 'lodash';
 import applicationConfigPath = require('application-config-path');
 import eol from 'eol';
+import { mktmp } from './utils';
 
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';
@@ -23,7 +23,7 @@ export const opensslDatabaseFilePath = configPath('certificate-authority', 'inde
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');
 
 export function withDomainSigningRequestConfig(domain: string, cb: (filepath: string) => void) {
-  let tmpFile = tmp().name;
+  let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificate-signing-requests.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({ domain });
@@ -33,7 +33,7 @@ export function withDomainSigningRequestConfig(domain: string, cb: (filepath: st
 }
 
 export function withDomainCertificateConfig(domain: string, cb: (filepath: string) => void) {
-  let tmpFile = tmp().name;
+  let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({

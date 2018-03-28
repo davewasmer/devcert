@@ -49,7 +49,7 @@ export default class WindowsPlatform implements Platform {
 
   async readProtectedFile(filepath: string): Promise<string> {
     if (!encryptionKey) {
-      encryptionKey = passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+      encryptionKey = await passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
     }
     // Try to decrypt the file
     try {
@@ -66,7 +66,7 @@ export default class WindowsPlatform implements Platform {
 
   async writeProtectedFile(filepath: string, contents: string) {
     if (!encryptionKey) {
-      encryptionKey = passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+      encryptionKey = await passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
     }
     let encryptedContents = this.encrypt(contents, encryptionKey);
     write(filepath, encryptedContents);

@@ -1,19 +1,19 @@
 # devcert - Development SSL made easy
 
-So, running a local HTTPS server usually sucks. There's a range of approaches,
-each with their own tradeoff. The common one, using self-signed certificates,
-means having to ignore scary browser warnings for each project.
+So, running a local HTTPS server usually sucks. There's a range of
+approaches, each with their own tradeoff. The common one, using self-signed
+certificates, means having to ignore scary browser warnings for each project.
 
-devcert makes the process easy. Want a private key and certificate file to use
-with your server? Just ask:
+devcert makes the process easy. Want a private key and certificate file to
+use with your server? Just ask:
 
 ```js
-let { key, cert } = await devcert.certificateFor('my-app.dev');
+let { key, cert } = await devcert.certificateFor('my-app.test');
 https.createServer({ key, cert }, app).listen(3000);
 });
 ```
 
-Now open https://my-app.dev:3000 and voila - your page loads with no scary
+Now open https://my-app.test:3000 and voila - your page loads with no scary
 warnings or hoops to jump through.
 
 > Certificates are cached by name, so two calls for
@@ -23,52 +23,143 @@ warnings or hoops to jump through.
 
 ### skipHostsFile
 
-If you supply a custom domain name (i.e. any domain other than `localhost`) when requesting a certificate from devcert, it will attempt to modify your system to redirect requests for that domain to your local machine (rather than to the real domain). It does this by modifying your `/etc/hosts` file (or the equivalent file for Windows).
+If you supply a custom domain name (i.e. any domain other than `localhost`)
+when requesting a certificate from devcert, it will attempt to modify your
+system to redirect requests for that domain to your local machine (rather
+than to the real domain). It does this by modifying your `/etc/hosts` file.
 
-If you pass in the `skipHostsFile` option, devcert will skip this step. This means that if you ask for certificates for `my-app.test` (for example), and don't have some other DNS redirect method in place, that you won't be able to access your app at `https://my-app.test` because your computer wouldn't know
+If you pass in the `skipHostsFile` option, devcert will skip this step. This
+means that if you ask for certificates for `my-app.test` (for example), and
+don't have some other DNS redirect method in place, that you won't be able to
+access your app at `https://my-app.test` because your computer wouldn't know
 that `my-app.test` should resolve your local machine.
+
+Keep in mind that SSL certificates are issued for _domains_, so if you ask
+for a certificate for `my-app.test`, and don't have any kind of DNS redirect
+in place (`/etc/hosts` or otherwise), trying to hit `localhost` won't work,
+even if the app you intended to serve via `my-app.test` is running on your
+local machine (since the SSL certificate won't say `localhost`).
 
 ### skipCertutil
 
 This option will tell devcert to avoid installing `certutil` tooling.
 
-`certutil` is a tooling package used to automated the installation of SSL certificates in certain circumstances; specifically, Firefox (for every OS) and Chrome (on Linux only). Without it, the install process changes for those two scenarios:
+`certutil` is a tooling package used to automated the installation of SSL
+certificates in certain circumstances; specifically, Firefox (for every OS)
+and Chrome (on Linux only).
 
-**Firefox**: Thankully, Firefox makes this easy. There's a point-and-click wizard for importing and trusting a certificate, so if you don't provide `installCertutil: true` to devcert, devcert will instead automatically open Firefox and kick off this wizard for you. Simply follow the prompts to trust the certificate. **Reminder: you'll only need to do this once per machine**
+Normally, devcert will attempt to install `certutil` if it's need and not
+already present on your system. If don't want devcert to install this
+package, pass `skipCertutil: true`.
 
-**Chrome on Linux**: Unfortunately, it appears that the **only** way to get Chrome to trust an SSL certificate on Linux is via the `certutil` tooling - there is no manual process for it. Thus, if you are using Chrome on Linux, do **not** supply `skipCertuil: true`.
+If you decide to `skipCertutil`, the initial setup process for devcert
+changes in these two scenarios:
+
+* **Firefox on all platforms**: Thankully, Firefox makes this easy. There's a
+  point-and-click wizard for importing and trusting a certificate, so if you
+  specify `skipCertutil: true`, devcert will instead automatically open Firefox
+  and kick off this wizard for you. Simply follow the prompts to trust the
+  certificate. **Reminder: you'll only need to do this once per machine**
+
+* **Chrome on Linux**: Unfortunately, it appears that the **only** way to get
+  Chrome to trust an SSL certificate on Linux is via the `certutil` tooling -
+  there is no manual process for it. Thus, if you are using Chrome on Linux, do
+  **not** supply `skipCertuil: true`. If you do, devcert certificates will not
+  be trusted by Chrome.
 
 The `certutil` tooling is installed in OS-specific ways:
 
 * Mac: `brew install nss`
 * Linux: `apt install libnss3-tools`
-* Windows: N/A
+* Windows: N/A (there is no easy, hands-off way to install certutil on Windows,
+  so devcert will simply fallback to the wizard approach for Firefox outlined
+  above)
 
 ## How it works
 
-When you ask for a development certificate, devcert will first check to see if it has run on this machine before. If not, it will create a root certificate authority and add it to your OS and various browser trust stores. You'll likely see password prompts from your OS at this point to authorize the new root CA. Once this root CA is trusted by your machine, devcert will encrypt the root CA credentials used to sign certificates with a user supplied password. This prevents malicious processes from access those keys to generated trusted certificates.
+When you ask for a development certificate, devcert will first check to see
+if it has run on this machine before. If not, it will create a root
+certificate authority and add it to your OS and various browser trust stores.
+You'll likely see password prompts from your OS at this point to authorize
+the new root CA.
 
-Since your machine now trusts this root CA, it will trust any certificates signed by it. So when you ask for a certificate for a new domain, devcert will decrypt the root CA credentials (triggering a password prompt to supply the decryption password as it does). It then uses those root CA credentials to generate a certificate specific to the domain you requested, and returns the new certificate to you. The root CA credentials are momentarily written in plain text to the disk in tmp files, since OpenSSL doesn't support directly supplying them via command line, but they are deleted as soon as the domain-specific certificate is generated.
+Since your machine now trusts this root CA, it will trust any certificates
+signed by it. So when you ask for a certificate for a new domain, devcert
+will use the root CA credentials to generate a certificate specific to the
+domain you requested, and returns the new certificate to you.
 
-If you request a domain that has already had certificates generated for it, devcert will simply return the cached certificates - no additional password prompting needed.
+If you request a domain that has already had certificates generated for it,
+devcert will simply return the cached certificates.
 
-This setup ensures that browsers won't show scary warnings about untrusted certificates, since your OS and browsers will now trust devcert's certificates. The root CA certificate is unique to your machine only, is generated on-the-fly when it is first installed, and stored in the system secret storage, so attackers should not be able to compromise it to generate their own certificates.
+This setup ensures that browsers won't show scary warnings about untrusted
+certificates, since your OS and browsers will now trust devcert's
+certificates.
 
-### Why install a root certificate authority?
+## Security Concerns
 
-The root certificate authority makes it slightly simpler to manage which domains are configured for SSL by devcert. The alternative is to generate and trust self-signed certificates for each domain. The problem is that while devcert is able to add a certificate to your machine's trust stores, the tooling to remove a certificate doesn't cover every case.
+There's a reason that your OS prompts you for your root password when devcert
+attempts to install it's root certificate authority. By adding it to your
+machine's trust stores, your browsers will automatically trust _any_ certificate
+generated with it.
 
-By trusting only a single root CA, devcert is able to guarantee that when you want to _disable_ SSL for a domain, it can do so with no manual intervention - we just delete the certificate files and that's it.
+This exposes a potential attack vector on your local machine: if someone else
+could use the devcert certificate authority to generate certificates, and if
+they could intercept / manipulate your network traffic, they could theoretically
+impersonate some websites, and your browser would not show any warnings (because
+it trusts the devcert authority).
+
+To prevent this, devcert takes steps to ensure that no one can access the
+devcert certificate authority credentials to generate malicious certificates
+without you knowing. The exact approach varies by platform:
+
+* **macOS and Linux**: the certificate authority's credentials are written to files that are only readable by the root user (i.e. `chown 0 ca-cert.crt` and
+`chmod 600 ca-cert.crt`). When devcert itself needs these, it shells out to
+`sudo` invocations to read / write the credentials.
+* **Windows**: because of my unfamiliarity with Windows file permissions, I
+wasn't confident I would be able to correctly set permissions to mimic the setup
+on macOS and Linux. So instead, devcert will prompt you for a password, and then
+use that to encrypt the credentials with an AES256 cipher. The password is never
+written to disk.
+
+To further protect these credentials, any time they are written to disk, they
+are written to temporary files, and are immediately deleted after they are no longer needed.
+
+Additionally, the root CA certificate is unique to your machine only: it's
+generated on-the-fly when it is first installed. ensuring there are no
+central / shared keys to crack across machines.
+
+### Why install a root certificate authority at all?
+
+The root certificate authority makes it simpler to manage which domains are
+configured for SSL by devcert. The alternative is to generate and trust
+self-signed certificates for each domain. The problem is that while devcert
+is able to add a certificate to your machine's trust stores, the tooling to
+remove a certificate doesn't cover every case. So if you ever wanted to
+_untrust_ devcert's certificates, you'd have to manually remove each one from
+each trust store.
+
+By trusting only a single root CA, devcert is able to guarantee that when you
+want to _disable_ SSL for a domain, it can do so with no manual intervention
+- we just delete the domain-specific certificate files. Since these
+domain-specific files aren't installed in your trust stores, once they are
+gone, they are gone.
 
 ## Testing
 
-If you want to test a contribution to devcert, it comes packaged with a Vagrantfile to help make testing easier. The Vagrantfile will spin up three virtual machines, one for each supported platform: macOS, Linux, and Windows.
+Testing a tool like devcert can be a pain. I haven't found a good automated
+solution for cross platform GUI testing (the GUI part is necessary to test
+each browser's handling of devcert certificates, as well as test the Firefox
+wizard flow).
 
-Launch the VMs with `vagrant up`, which should start all three in GUI mode. Each VM is a snapshot, with instructions for testing on screen already. Just follow the instructions to test each.
+To make things easier, devcert comes with a series of virtual machine images. Each one is a snapshot taken right before running a test - just launch the machine and hit <Enter>.
 
-You can also use snapshots of the VMs to roll them back to a pristine state for another round of testing. Just `vagrant snapshot push` on the intial bootup of the VMs, and `vagrant snapshot pop` to roll it back to the pristine state later.
+You can also use the snapshotted state of the VMs to roll them back to a
+pristine state for another round of testing.
 
-**Note**: Be aware that the macOS license terms prohibit running it on non-Apple hardware, so you must own a Mac to test that platform. If you don't own a Mac - that's okay, just mention in the PR that you were unable to test on a Mac and we're happy to test it for you.
+> **Note**: Be aware that the macOS license terms prohibit running it on
+> non-Apple hardware, so you must own a Mac to test that platform. If you don't
+> own a Mac - that's okay, just mention in the PR that you were unable to test
+> on a Mac and we're happy to test it for you.
 
 ## License
 

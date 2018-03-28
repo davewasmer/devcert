@@ -180,17 +180,33 @@ The `ui` option should be an object with the following methods:
     // wait for Firefox to exit - this is just to prompt the user that they
     // need to close the application.
   },
-  async startFirefoxWizard(certificateURL: string) {
+  async startFirefoxWizard(certificateHost: string) {
     // Invoked when devcert detects a Firefox installation and `skipCertutil:
     // true` was specified. This is invoked right before devcert launches the
     // Firefox certificate import wizard GUI. Used to give the user a heads up
     // as to why they are about to see Firefox pop up.
     //
-    // The certificateURL provided is the URL for a temporary file server that
-    // devcert has spun up (Firefox needs try to "download" the cert to trigger
-    // the wizard). You can include this URL in your messaging in case devcert's
-    // attempt to automatically open that URL fails for some reason.
+    // The certificateHost provided is the URL for the temporary server that
+    // devcert has spun up in order to trigger the wizard(Firefox needs try to
+    // "download" the cert to trigger the wizard). This URL will load the page
+    // supplied in the `firefoxWizardPromptPage()` method below.
+    //
+    // Normally, devcert will automatically open this URL, but in case it fails
+    // you may want to print it out to the console with an explanatory message
+    // so the user isn't left hanging wondering what's happening.
   },
+  async firefoxWizardPromptPage(certificateURL: string): Promise<string> {
+    // When devcert starts the Firefox certificate installation wizard GUI, it
+    // first loads an HTML page in Firefox. The template used for that page is
+    // the return value of this method. The supplied certificateURL is the path
+    // to the actual certificate. The Firefox tab must attempt to load this URL
+    // to trigger the wizard.
+    //
+    // The default implemenation is a simple redirect to that URL. But you could
+    // supply your own branded template here, with a button that says "Install
+    // certificate" that is linked to the certificateURL, along with a more in
+    // depth explanation of what is happening for example.
+  }
   async waitForfirefoxWizard() {
     // Invoked _after_ the Firefox certificate import wizard is kicked off. This
     // method should not resolve until the user indicates that the wizard is

@@ -5,11 +5,12 @@ export interface UserInterface {
   getWindowsEncryptionPassword(): Promise<string>;
   warnChromeOnLinuxWithoutCertutil(): Promise<void>;
   closeFirefoxBeforeContinuing(): Promise<void>;
-  startFirefoxWizard(certificateURL: string): Promise<void>;
+  startFirefoxWizard(certificateHost: string): Promise<void>;
+  firefoxWizardPromptPage(certificateURL: string): Promise<string>;
   waitForFirefoxWizard(): Promise<void>;
 }
 
-export default {
+const DefaultUI: UserInterface = {
   async getWindowsEncryptionPassword() {
     return await passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
   },
@@ -25,7 +26,7 @@ export default {
   async closeFirefoxBeforeContinuing() {
     console.log('Please close Firefox before continuing');
   },
-  async startFirefoxWizard(certificateURL) {
+  async startFirefoxWizard(certificateHost) {
     console.log(`
       devcert was unable to automatically configure Firefox. You'll need to
       complete this process manually. Don't worry though - Firefox will walk
@@ -36,13 +37,23 @@ export default {
       certificate. When you are finished, come back here and we'll finish up.
 
       (If Firefox doesn't start, go ahead and start it and navigate to
-      ${ certificateURL } in a new tab.)
+      ${ certificateHost } in a new tab.)
 
       If you are curious about why all this is necessary, check out
       https://github.com/davewasmer/devcert#how-it-works
 
       <Press any key to launch Firefox wizard>
     `);
+    await waitForUser();
+  },
+  async firefoxWizardPromptPage(certificateURL: string) {
+    return `
+      <html>
+        <head>
+          <meta http-equiv="refresh" content="0; url="${certificateURL}" />
+        </head>
+      </html>
+    `;
   },
   async waitForFirefoxWizard() {
     console.log(`
@@ -55,4 +66,6 @@ export default {
     `)
     await waitForUser();
   }
-} as UserInterface;
+}
+
+export default DefaultUI;

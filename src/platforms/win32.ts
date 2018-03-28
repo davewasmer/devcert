@@ -40,7 +40,7 @@ export default class WindowsPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      this.sudo(`echo 127.0.0.1  ${ domain } > ${ this.HOST_FILE_PATH }`);
+      await this.sudo(`echo 127.0.0.1  ${ domain } > ${ this.HOST_FILE_PATH }`);
     }
   }
 

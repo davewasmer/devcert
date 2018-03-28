@@ -41,7 +41,7 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   if (!commandExists('openssl')) {
-    throw new Error('OpenSSL not found. OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
+    throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
   let domainKeyPath = pathForDomain(domain, `private-key.key`);

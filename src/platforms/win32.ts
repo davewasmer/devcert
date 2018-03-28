@@ -1,11 +1,11 @@
 import createDebug from 'debug';
-import passwordPrompt from 'password-prompt';
 import crypto from 'crypto';
 import { writeFileSync as write, readFileSync as read } from 'fs';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
 import { run, sudo } from '../utils';
+import UI from '../user-interface';
 
 const debug = createDebug('devcert:platforms:windows');
 
@@ -49,7 +49,7 @@ export default class WindowsPlatform implements Platform {
 
   async readProtectedFile(filepath: string): Promise<string> {
     if (!encryptionKey) {
-      encryptionKey = await passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+      encryptionKey = await UI.getWindowsEncryptionPassword();
     }
     // Try to decrypt the file
     try {
@@ -66,7 +66,7 @@ export default class WindowsPlatform implements Platform {
 
   async writeProtectedFile(filepath: string, contents: string) {
     if (!encryptionKey) {
-      encryptionKey = await passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+      encryptionKey = await UI.getWindowsEncryptionPassword();
     }
     let encryptedContents = this.encrypt(contents, encryptionKey);
     write(filepath, encryptedContents);

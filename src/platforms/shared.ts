@@ -5,8 +5,9 @@ import getPort from 'get-port';
 import http from 'http';
 import { sync as glob } from 'glob';
 import { readFileSync as readFile, existsSync as exists } from 'fs';
-import { run, waitForUser } from '../utils';
+import { run } from '../utils';
 import { isMac, isLinux } from '../constants';
+import UI from '../user-interface';
 import { execSync as exec } from 'child_process';
 
 const debug = createDebug('devcert:platforms:shared');
@@ -41,8 +42,7 @@ export async function addCertificateToNSSCertDB(nssDirGlob: string, certPath: st
  */
 export async function closeFirefox(): Promise<void> {
   if (isFirefoxOpen()) {
-    console.log('Please close Firefox before continuing');
-    // LEFT OFF: this appears to not be looping properly
+    await UI.closeFirefoxBeforeContinuing();
     while(isFirefoxOpen()) {
       await sleep(50);
     }
@@ -91,32 +91,8 @@ export async function openCertificateInFirefox(firefoxPath: string, certPath: st
     res.end();
   }).listen(port);
   debug('Certificate server is up. Printing instructions for user and launching Firefox with hosted certificate URL');
-  console.log(`
-    devcert was unable to automatically configure Firefox. You'll need to
-    complete this process manually. Don't worry though - Firefox will walk
-    you through it.
-
-    When you're ready, hit any key to continue. Firefox will launch and
-    display a wizard to walk you through how to trust the devcert
-    certificate. When you are finished, come back here and we'll finish up.
-
-    (If Firefox doesn't start, go ahead and start it and navigate to
-    http://localhost:${ port } in a new tab.)
-
-    If you are curious about why all this is necessary, check out
-    https://github.com/davewasmer/devcert#how-it-works
-
-    <Press any key to launch Firefox wizard>
-  `);
+  await UI.startFirefoxWizard(`http://localhost:${ port }`);
   run(`${ firefoxPath } http://localhost:${ port }`);
-  console.log(`
-    Launching Firefox ...
-
-    Great! Once you've finished the Firefox wizard for adding the devcert
-    certificate, just hit any key here again and we'll wrap up.
-
-    <Press any key to continue>
-  `)
-  await waitForUser();
+  await UI.waitForFirefoxWizard();
   server.close();
 }

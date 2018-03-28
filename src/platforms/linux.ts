@@ -5,6 +5,7 @@ import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { run, sudo } from '../utils';
 import { Options } from '../index';
+import UI from '../user-interface';
 import { Platform } from '.';
 
 const debug = createDebug('devcert:platforms:linux');
@@ -57,13 +58,7 @@ export default class LinuxPlatform implements Platform {
     if (this.isChromeInstalled()) {
       debug('Chrome install detected: adding devcert root CA to Chrome trust store ...');
       if (!commandExists('certutil')) {
-        console.warn(`
-          WARNING: It looks like you have Chrome installed, but you specified
-          'skipCertutilInstall: true'. Unfortunately, without installing
-          certutil, it's impossible get Chrome to trust devcert's certificates
-          The certificates will work, but Chrome will continue to warn you that
-          they are untrusted.
-        `);
+        UI.warnChromeOnLinuxWithoutCertutil();
       } else {
         await closeFirefox();
         await addCertificateToNSSCertDB(this.CHROME_NSS_DIR, certificatePath, 'certutil');

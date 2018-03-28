@@ -13,12 +13,14 @@ import {
 import currentPlatform from './platforms';
 import installCertificateAuthority from './certificate-authority';
 import generateDomainCertificate from './certificates';
+import UI, { UserInterface } from './user-interface';
 
 const debug = createDebug('devcert');
 
 export interface Options {
   skipCertutilInstall?: true,
-  skipHostsFile?: true
+  skipHostsFile?: true,
+  ui?: UserInterface
 }
 
 /**
@@ -35,6 +37,10 @@ export interface Options {
  */
 export async function certificateFor(domain: string, options: Options = {}) {
   debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+
+  if (options.ui) {
+    Object.assign(UI, options.ui);
+  }
 
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`Platform not supported: "${ process.platform }"`);

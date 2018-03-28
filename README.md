@@ -144,6 +144,65 @@ want to _disable_ SSL for a domain, it can do so with no manual intervention
 domain-specific files aren't installed in your trust stores, once they are
 gone, they are gone.
 
+
+## Integration
+
+devcert has been designed from day one to work as low-level library that other
+tools can delegate to. The goal is to make HTTPS development easy for everyone,
+regardless of framework or library choice.
+
+With that in mind, if you'd like to use devcert in your library/framework/CLI,
+devcert makes that easy.
+
+In addition to the options above, devcert also exposes a `ui` option. This
+option allows you to take over all user interact that devcert requires,
+substituting your own prompts and user interface. You can use this to brand the experience with your own tool's name, localize the messages, or integrate devcert into a larger existing workflow.
+
+The `ui` option should be an object with the following methods:
+
+```ts
+{
+  async getWindowsEncryptionPassword(): Promise<string> {
+    // Invoked when devcert needs the password used to encrypt the root
+    // certificate authority credentials on Windows. May be invoked multiple
+    // times if the user's supplied password is incorrect
+  },
+  async warnChromeOnLinuxWithoutCertutil(): Promise<string> {
+    // Invoked when devcert is run on Linux, detects that Chrome is installed,
+    // and the `skipCertutil` option is `true`. Used to warn the user that
+    // Chrome will not work with `skipCertutil: true` on Linux.
+  },
+  async closeFirefoxBeforeContinuing() {
+    // Invoked when devcert detects that Firefox is running while it is trying
+    // to programmatically install it's certificate authority in the Firefox
+    // trust store. Firefox appears to overwrite changes to the trust store on
+    // exit, so Firefox must be closed before devcert can continue. devcert will
+    // wait for Firefox to exit - this is just to prompt the user that they
+    // need to close the application.
+  },
+  async startFirefoxWizard(certificateURL: string) {
+    // Invoked when devcert detects a Firefox installation and `skipCertutil:
+    // true` was specified. This is invoked right before devcert launches the
+    // Firefox certificate import wizard GUI. Used to give the user a heads up
+    // as to why they are about to see Firefox pop up.
+    //
+    // The certificateURL provided is the URL for a temporary file server that
+    // devcert has spun up (Firefox needs try to "download" the cert to trigger
+    // the wizard). You can include this URL in your messaging in case devcert's
+    // attempt to automatically open that URL fails for some reason.
+  },
+  async waitForfirefoxWizard() {
+    // Invoked _after_ the Firefox certificate import wizard is kicked off. This
+    // method should not resolve until the user indicates that the wizard is
+    // complete (unfortunately, we have no way of determining that
+    // programmatically)
+  }
+}
+```
+
+You can supply any or all of these methods - ones you do not supply will fall
+back to the default implemenation.
+
 ## Testing
 
 Testing a tool like devcert can be a pain. I haven't found a good automated

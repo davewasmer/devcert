@@ -1,7 +1,5 @@
-import crypto from 'crypto';
 import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
-import inquirer from 'inquirer';
 
 import {
   rootCAKeyPath,
@@ -52,43 +50,22 @@ function seedConfigFiles() {
 }
 
 export async function withCertificateAuthorityCredentials(cb: ({ caKeyPath, caCertPath }: { caKeyPath: string, caCertPath: string }) => Promise<void> | void) {
-  debug(`Decrypting devcert's certificate authority credentials`);
-  let decryptedCAKeyPath = mktmp();
-  let decryptedCACertPath = mktmp();
-  let encryptedCAKey = readFile(rootCAKeyPath, 'utf-8');
-  let encryptedCACert = readFile(rootCACertPath, 'utf-8');
-  let encryptionKey = await getPasswordFromUser();
-  writeFile(decryptedCAKeyPath, decrypt(encryptedCAKey, encryptionKey));
-  writeFile(decryptedCACertPath, decrypt(encryptedCACert, encryptionKey));
-  await cb({ caKeyPath: decryptedCAKeyPath, caCertPath: decryptedCACertPath });
-  rm(decryptedCAKeyPath);
-  rm(decryptedCACertPath);
+  debug(`Retrieving devcert's certificate authority credentials`);
+  let tmpCAKeyPath = mktmp();
+  let tmpCACertPath = mktmp();
+  let caKey = await currentPlatform.readProtectedFile(rootCAKeyPath);
+  let caCert = await currentPlatform.readProtectedFile(rootCACertPath);
+  writeFile(tmpCAKeyPath, caKey);
+  writeFile(tmpCACertPath, caCert);
+  await cb({ caKeyPath: tmpCAKeyPath, caCertPath: tmpCACertPath });
+  rm(tmpCAKeyPath);
+  rm(tmpCACertPath);
 }
 
 async function saveCertificateAuthorityCredentials(keypath: string, certpath: string) {
-  debug(`Encrypting devcert's certificate authority credentials`);
+  debug(`Saving devcert's certificate authority credentials`);
   let key = readFile(keypath, 'utf-8');
   let cert = readFile(certpath, 'utf-8');
-  let encryptionKey = await getPasswordFromUser();
-  writeFile(rootCAKeyPath, encrypt(key, encryptionKey));
-  writeFile(rootCACertPath, encrypt(cert, encryptionKey));
-}
-
-async function getPasswordFromUser(): Promise<string> {
-  let { password } = await inquirer.prompt([{
-    type: 'password',
-    name: 'password',
-    message: 'password:'
-  }]);
-  return password;
-}
-
-function encrypt(text: string, key: string) {
-  let cipher = crypto.createCipher('aes256', key);
-  return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
-}
-
-function decrypt(encrypted: string, key: string) {
-  let decipher = crypto.createDecipher('aes256', key);
-  return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
+  await currentPlatform.writeProtectedFile(rootCAKeyPath, key);
+  await currentPlatform.writeProtectedFile(rootCACertPath, cert);
 }

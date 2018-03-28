@@ -1,9 +1,9 @@
 import path from 'path';
-import { existsSync as exists, readFileSync as read } from 'fs';
+import { existsSync as exists, readFileSync as read, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
-import { run } from '../utils';
+import { run, sudo } from '../utils';
 import { Options } from '../index';
 import { Platform } from '.';
 
@@ -79,6 +79,20 @@ export default class LinuxPlatform implements Platform {
       run(`sudo bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
     }
   }
+
+  async readProtectedFile(filepath: string) {
+    return (await sudo(`cat ${filepath}`)).trim();
+  }
+
+  async writeProtectedFile(filepath: string, contents: string) {
+    if (!exists(filepath)) {
+      await sudo(`rm ${filepath}`);
+    }
+    writeFile(filepath, contents);
+    await sudo(`chown 0 ${filepath}`);
+    await sudo(`chmod 600 ${filepath}`);
+  }
+
 
   private isFirefoxInstalled() {
     return exists(this.FIREFOX_BIN_PATH);

@@ -1,12 +1,15 @@
 import createDebug from 'debug';
-import sudoPrompt from 'sudo-prompt';
-import { readFileSync as read } from 'fs';
+import passwordPrompt from 'password-prompt';
+import crypto from 'crypto';
+import { writeFileSync as write, readFileSync as read } from 'fs';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
-import { run } from '../utils';
+import { run, sudo } from '../utils';
 
 const debug = createDebug('devcert:platforms:windows');
+
+let encryptionKey: string;
 
 export default class WindowsPlatform implements Platform {
 
@@ -40,18 +43,43 @@ export default class WindowsPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      await this.sudo(`echo 127.0.0.1  ${ domain } > ${ this.HOST_FILE_PATH }`);
+      await sudo(`echo 127.0.0.1  ${ domain } > ${ this.HOST_FILE_PATH }`);
     }
   }
 
-  sudo(cmd: string): Promise<string | null> {
-    return new Promise((resolve, reject) => {
-      sudoPrompt.exec(cmd, { name: 'devcert' }, (err: Error | null, stdout: string | null, stderr: string | null) => {
-        let error = err || (typeof stderr === 'string' && stderr.trim().length > 0 && new Error(stderr)) ;
-        error ? reject(error) : resolve(stdout);
-      });
-    });
+  async readProtectedFile(filepath: string): Promise<string> {
+    if (!encryptionKey) {
+      encryptionKey = passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+    }
+    // Try to decrypt the file
+    try {
+      return this.decrypt(read(filepath, 'utf8'), encryptionKey);
+    } catch (e) {
+      // If it's a bad password, clear the cached copy and retry
+      if (e.message.indexOf('bad decrypt') >= -1) {
+        encryptionKey = null;
+        return await this.readProtectedFile(filepath);
+      }
+      throw e;
+    }
   }
 
+  async writeProtectedFile(filepath: string, contents: string) {
+    if (!encryptionKey) {
+      encryptionKey = passwordPrompt('devcert password (http://bit.ly/devcert-what-password?):');
+    }
+    let encryptedContents = this.encrypt(contents, encryptionKey);
+    write(filepath, encryptedContents);
+  }
+
+  private encrypt(text: string, key: string) {
+    let cipher = crypto.createCipher('aes256', key);
+    return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+  }
+
+  private decrypt(encrypted: string, key: string) {
+    let decipher = crypto.createDecipher('aes256', key);
+    return decipher.update(encrypted, 'hex', 'utf8') + decipher.final('utf8');
+  }
 
 }

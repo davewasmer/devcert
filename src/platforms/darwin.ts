@@ -1,8 +1,8 @@
 import path from 'path';
-import { existsSync as exists, readFileSync as read } from 'fs';
+import { writeFileSync as writeFile, existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { run } from '../utils';
+import { run, sudo } from '../utils';
 import { Options } from '../index';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { Platform } from '.';
@@ -59,9 +59,21 @@ export default class MacOSPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      // Shell out to append the file so the subshell can prompt for sudo
-      run(`sudo echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }`);
+      sudo(`echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }`);
     }
+  }
+
+  async readProtectedFile(filepath: string) {
+    return (await sudo(`cat ${filepath}`)).trim();
+  }
+
+  async writeProtectedFile(filepath: string, contents: string) {
+    if (!exists(filepath)) {
+      await sudo(`rm ${filepath}`);
+    }
+    writeFile(filepath, contents);
+    await sudo(`chown 0 ${filepath}`);
+    await sudo(`chmod 600 ${filepath}`);
   }
 
   private isFirefoxInstalled() {

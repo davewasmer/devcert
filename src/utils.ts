@@ -2,6 +2,7 @@ import { execSync, ExecSyncOptions } from 'child_process';
 import tmp from 'tmp';
 import createDebug from 'debug';
 import path from 'path';
+import sudoPrompt from 'sudo-prompt';
 
 import {
   configPath,
@@ -38,4 +39,13 @@ export function mktmp() {
   // discardDescriptor because windows complains the file is in use if we create a tmp file
   // and then shell out to a process that tries to use it
   return tmp.fileSync({ discardDescriptor: true }).name;
+}
+
+export function sudo(cmd: string): Promise<string | null> {
+  return new Promise((resolve, reject) => {
+    sudoPrompt.exec(cmd, { name: 'devcert' }, (err: Error | null, stdout: string | null, stderr: string | null) => {
+      let error = err || (typeof stderr === 'string' && stderr.trim().length > 0 && new Error(stderr)) ;
+      error ? reject(error) : resolve(stdout);
+    });
+  });
 }

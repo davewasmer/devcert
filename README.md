@@ -207,7 +207,7 @@ The `ui` option should be an object with the following methods:
     // certificate" that is linked to the certificateURL, along with a more in
     // depth explanation of what is happening for example.
   }
-  async waitForfirefoxWizard() {
+  async waitForFirefoxWizard() {
     // Invoked _after_ the Firefox certificate import wizard is kicked off. This
     // method should not resolve until the user indicates that the wizard is
     // complete (unfortunately, we have no way of determining that

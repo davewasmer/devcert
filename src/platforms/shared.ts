@@ -88,7 +88,7 @@ export async function openCertificateInFirefox(firefoxPath: string, certPath: st
   let port = await getPort();
   let server = http.createServer(async (req, res) => {
     let { pathname } = url.parse(req.url);
-    if (pathname === 'certificate') {
+    if (pathname === '/certificate') {
       res.writeHead(200, { 'Content-type': 'application/x-x509-ca-cert' });
       res.write(readFile(certPath));
       res.end();

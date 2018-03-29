@@ -82,7 +82,7 @@ export default class MacOSPlatform implements Platform {
 
   private isNSSInstalled() {
     try {
-      return run('brew list').toString().indexOf('nss') >= -1;
+      return run('brew list').toString().indexOf('nss') > -1;
     } catch (e) {
       return false;
     }

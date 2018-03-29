@@ -3,7 +3,7 @@ import { existsSync as exists, readFileSync as read, writeFileSync as writeFile 
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
-import { run, sudo } from '../utils';
+import { run } from '../utils';
 import { Options } from '../index';
 import UI from '../user-interface';
 import { Platform } from '.';
@@ -71,21 +71,21 @@ export default class LinuxPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      run(`sudo bash -c "echo '127.0.0.1  ${ domain }' >> ${ this.HOST_FILE_PATH }"`);
+      run(`echo '127.0.0.1  ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }
 
   async readProtectedFile(filepath: string) {
-    return (await sudo(`cat ${filepath}`)).trim();
+    return (await run(`sudo cat ${filepath}`)).toString().trim();
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
     if (exists(filepath)) {
-      await sudo(`rm "${filepath}"`);
+      await run(`sudo rm "${filepath}"`);
     }
     writeFile(filepath, contents);
-    await sudo(`chown 0 "${filepath}"`);
-    await sudo(`chmod 600 "${filepath}"`);
+    await run(`sudo chown 0 "${filepath}"`);
+    await run(`sudo chmod 600 "${filepath}"`);
   }
 
 

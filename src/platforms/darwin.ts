@@ -39,9 +39,6 @@ export default class MacOSPlatform implements Platform {
           if (commandExists('brew')) {
             debug(`certutil is not already installed, but Homebrew is detected. Trying to install certutil via Homebrew...`);
             run('brew install nss');
-            let certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
-            await closeFirefox();
-            await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, certutilPath);
           } else {
             debug(`Homebrew isn't installed, so we can't try to install certutil. Falling back to manual certificate install`);
             return await openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
@@ -51,6 +48,9 @@ export default class MacOSPlatform implements Platform {
           return await openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
         }
       }
+      let certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
+      await closeFirefox();
+      await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, certutilPath);
     } else {
       debug('Firefox does not appear to be installed, skipping Firefox-specific steps...');
     }

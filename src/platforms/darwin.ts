@@ -69,11 +69,11 @@ export default class MacOSPlatform implements Platform {
 
   async writeProtectedFile(filepath: string, contents: string) {
     if (exists(filepath)) {
-      await sudo(`rm ${filepath}`);
+      await sudo(`rm "${filepath}"`);
     }
     writeFile(filepath, contents);
-    await sudo(`chown 0 ${filepath}`);
-    await sudo(`chmod 600 ${filepath}`);
+    await sudo(`chown 0 "${filepath}"`);
+    await sudo(`chmod 600 "${filepath}"`);
   }
 
   private isFirefoxInstalled() {

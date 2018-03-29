@@ -80,7 +80,7 @@ export default class LinuxPlatform implements Platform {
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
-    if (!exists(filepath)) {
+    if (exists(filepath)) {
       await sudo(`rm ${filepath}`);
     }
     writeFile(filepath, contents);

@@ -42,6 +42,10 @@ export async function certificateFor(domain: string, options: Options = {}) {
     Object.assign(UI, options.ui);
   }
 
+  if (appName.length > 64) {
+    appName = appName.slice(-64)
+  }
+
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`Platform not supported: "${ process.platform }"`);
   }

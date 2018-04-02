@@ -15,7 +15,8 @@ import {
   opensslSerialFilePath,
   opensslDatabaseFilePath,
   isWindows,
-  isLinux
+  isLinux,
+  caVersionFile
 } from './constants';
 import currentPlatform from './platforms';
 import { openssl, mktmp } from './utils';
@@ -75,6 +76,7 @@ function scrubOldInsecureVersions() {
     path.join(configDir, 'openssl.conf'),
     path.join(configDir, 'devcert-ca-root.key'),
     path.join(configDir, 'devcert-ca-root.crt'),
+    path.join(configDir, 'devcert-ca-version'),
     path.join(configDir, 'certs')
   ].forEach((filepath) => {
     if (exists(filepath)) {
@@ -86,9 +88,12 @@ function scrubOldInsecureVersions() {
 
 /**
  * Initializes the files OpenSSL needs to sign certificates as a certificate
- * authority
+ * authority, as well as our CA setup version
  */
 function seedConfigFiles() {
+  // This is v2 of the devcert certificate authority setup
+  writeFile(caVersionFile, '2');
+  // OpenSSL CA files
   writeFile(opensslDatabaseFilePath, '');
   writeFile(opensslSerialFilePath, '01');
 }

@@ -18,6 +18,7 @@ export const configPath: (...pathSegments: string[]) => string = path.join.bind(
 export const domainsDir = configPath('domains');
 export const pathForDomain: (domain: string, ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
 
+export const caVersionFile = configPath('devcert-ca-version');
 export const opensslSerialFilePath = configPath('certificate-authority', 'serial');
 export const opensslDatabaseFilePath = configPath('certificate-authority', 'index.txt');
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');

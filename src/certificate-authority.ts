@@ -1,4 +1,11 @@
-import { unlinkSync as rm, readFileSync as readFile, writeFileSync as writeFile } from 'fs';
+import path from 'path';
+import {
+  unlinkSync as rm,
+  readFileSync as readFile,
+  writeFileSync as writeFile,
+  existsSync as exists
+} from 'fs';
+import { sync as rimraf } from 'rimraf';
 import createDebug from 'debug';
 
 import {
@@ -6,7 +13,9 @@ import {
   rootCACertPath,
   caSelfSignConfig,
   opensslSerialFilePath,
-  opensslDatabaseFilePath
+  opensslDatabaseFilePath,
+  isWindows,
+  isLinux
 } from './constants';
 import currentPlatform from './platforms';
 import { openssl, mktmp } from './utils';
@@ -20,6 +29,9 @@ const debug = createDebug('devcert:certificate-authority');
  * per-app certs.
  */
 export default async function installCertificateAuthority(options: Options = {}): Promise<void> {
+  debug(`Checking if older devcert install is present`);
+  scrubOldInsecureVersions();
+
   debug(`Generating a root certificate authority`);
   let rootKeyPath = mktmp();
   let rootCertPath = mktmp();
@@ -38,6 +50,38 @@ export default async function installCertificateAuthority(options: Options = {})
 
   debug(`Adding the root certificate authority to trust stores`);
   await currentPlatform.addToTrustStores(rootCertPath, options);
+}
+
+/**
+ * Older versions of devcert left the root certificate keys unguarded and
+ * accessible by userland processes. Here, we check for evidence of this older
+ * version, and if found, we delete the root certificate keys to remove the
+ * attack vector.
+ */
+function scrubOldInsecureVersions() {
+  // Use the old verion's logic for determining config directory
+  let configDir: string;
+  if (isWindows && process.env.LOCALAPPDATA) {
+    configDir = path.join(process.env.LOCALAPPDATA, 'devcert', 'config');
+  } else {
+    let uid = process.getuid && process.getuid();
+    let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
+    configDir = path.join(userHome, '.config', 'devcert');
+  }
+
+  // Delete the root certificate keys, as well as the generated app certificates
+  debug(`Checking ${ configDir } for legacy files ...`);
+  [
+    path.join(configDir, 'openssl.conf'),
+    path.join(configDir, 'devcert-ca-root.key'),
+    path.join(configDir, 'devcert-ca-root.crt'),
+    path.join(configDir, 'certs')
+  ].forEach((filepath) => {
+    if (exists(filepath)) {
+      debug(`Removing legacy file: ${ filepath }`)
+      rimraf(filepath);
+    }
+  });
 }
 
 /**

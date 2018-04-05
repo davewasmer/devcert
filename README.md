@@ -8,9 +8,8 @@ devcert makes the process easy. Want a private key and certificate file to
 use with your server? Just ask:
 
 ```js
-let { key, cert } = await devcert.certificateFor('my-app.test');
-https.createServer({ key, cert }, app).listen(3000);
-});
+let ssl = await devcert.certificateFor('my-app.test');
+https.createServer(ssl, app).listen(3000);
 ```
 
 Now open https://my-app.test:3000 and voila - your page loads with no scary
@@ -154,9 +153,11 @@ regardless of framework or library choice.
 With that in mind, if you'd like to use devcert in your library/framework/CLI,
 devcert makes that easy.
 
-In addition to the options above, devcert also exposes a `ui` option. This
-option allows you to take over all user interact that devcert requires,
-substituting your own prompts and user interface. You can use this to brand the experience with your own tool's name, localize the messages, or integrate devcert into a larger existing workflow.
+In addition to the options above, devcert exposes a `ui` option. This option
+allows you to control all the points where devcert requries user interaction,
+substituting your own prompts and user interface. You can use this to brand
+the experience with your own tool's name, localize the messages, or integrate
+devcert into a larger existing workflow.
 
 The `ui` option should be an object with the following methods:
 
@@ -235,6 +236,12 @@ pristine state for another round of testing.
 > non-Apple hardware, so you must own a Mac to test that platform. If you don't
 > own a Mac - that's okay, just mention in the PR that you were unable to test
 > on a Mac and we're happy to test it for you.
+
+### Virtual Machine Snapshots
+
+* [macOS](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/macOS.pvm.zip)
+* [Windows](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/MSEdge+-+Win10.zip)
+* [Ubuntu](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/Ubuntu+Linux.zip)
 
 ## License
 

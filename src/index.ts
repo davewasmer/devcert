@@ -42,6 +42,8 @@ export async function certificateFor(domain: string, options: Options = {}) {
     Object.assign(UI, options.ui);
   }
 
+  appName = appName.replace(new RegExp(path.sep, 'g'), '')
+
   if (!isMac && !isLinux && !isWindows) {
     throw new Error(`Platform not supported: "${ process.platform }"`);
   }

@@ -50,7 +50,7 @@ const DefaultUI: UserInterface = {
     return `
       <html>
         <head>
-          <meta http-equiv="refresh" content="0; url="${certificateURL}" />
+          <meta http-equiv="refresh" content="0; url=${certificateURL}" />
         </head>
       </html>
     `;

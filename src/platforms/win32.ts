@@ -37,7 +37,11 @@ export default class WindowsPlatform implements Platform {
     }
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)
-    await openCertificateInFirefox('start firefox', certificatePath);
+    try {
+      await openCertificateInFirefox('start firefox', certificatePath);
+    } catch {
+      debug('Error opening Firefox, most likely Firefox is not installed');
+    }
   }
 
   async addDomainToHostFileIfMissing(domain: string) {

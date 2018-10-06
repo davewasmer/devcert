@@ -1,6 +1,5 @@
 import { readFileSync as readFile, readdirSync as readdir, existsSync as exists } from 'fs';
 import createDebug from 'debug';
-import { sync as commandExists } from 'command-exists';
 import rimraf from 'rimraf';
 import {
   isMac,
@@ -8,7 +7,7 @@ import {
   isWindows,
   pathForDomain,
   domainsDir,
-  rootCAKeyPath
+  rootCACertPath
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority from './certificate-authority';
@@ -46,14 +45,10 @@ export async function certificateFor(domain: string, options: Options = {}) {
     throw new Error(`Platform not supported: "${ process.platform }"`);
   }
 
-  if (!commandExists('openssl')) {
-    throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
-  }
-
   let domainKeyPath = pathForDomain(domain, `private-key.key`);
   let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
-  if (!exists(rootCAKeyPath)) {
+  if (!exists(rootCACertPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
   }

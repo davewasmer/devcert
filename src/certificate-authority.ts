@@ -11,16 +11,12 @@ import createDebug from 'debug';
 import {
   rootCAKeyPath,
   rootCACertPath,
-  caSelfSignConfig,
-  opensslSerialFilePath,
-  opensslDatabaseFilePath,
   isWindows,
   isLinux,
   caVersionFile
 } from './constants';
 import currentPlatform from './platforms';
-import { openssl, mktmp } from './utils';
-import { generateKey } from './certificates';
+import { generateKey, generateCACertificate, mktmp } from './utils';
 import { Options } from './index';
 
 const debug = createDebug('devcert:certificate-authority');
@@ -35,16 +31,17 @@ export default async function installCertificateAuthority(options: Options = {})
 
   debug(`Generating a root certificate authority`);
   let rootKeyPath = mktmp();
+  let rootPublicKeyPath = mktmp();
   let rootCertPath = mktmp();
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
   seedConfigFiles();
 
   debug(`Generating a private key`);
-  generateKey(rootKeyPath);
+  await generateKey(rootKeyPath, rootPublicKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCertPath }"`);
+  await generateCACertificate(rootKeyPath, rootPublicKeyPath, rootCertPath);
 
   debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
@@ -87,15 +84,11 @@ function scrubOldInsecureVersions() {
 }
 
 /**
- * Initializes the files OpenSSL needs to sign certificates as a certificate
- * authority, as well as our CA setup version
+ * Initializes our CA setup version
  */
 function seedConfigFiles() {
   // This is v2 of the devcert certificate authority setup
   writeFile(caVersionFile, '2');
-  // OpenSSL CA files
-  writeFile(opensslDatabaseFilePath, '');
-  writeFile(opensslSerialFilePath, '01');
 }
 
 export async function withCertificateAuthorityCredentials(cb: ({ caKeyPath, caCertPath }: { caKeyPath: string, caCertPath: string }) => Promise<void> | void) {

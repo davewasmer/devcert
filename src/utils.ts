@@ -1,21 +1,21 @@
-import { execSync, ExecSyncOptions } from "child_process";
-import tmp from "tmp";
-import createDebug from "debug";
-import { promisify } from "util";
+import { execSync, ExecSyncOptions } from 'child_process';
+import tmp from 'tmp';
+import createDebug from 'debug';
+import sudoPrompt from 'sudo-prompt';
+import { promisify } from 'util';
 import {
   readFile as readFileAsync,
   writeFile as writeFileAsync
-} from "fs";
-import sudoPrompt from "sudo-prompt";
-import {pki, md, random } from "node-forge";
-import { defaultDays } from "./constants";
+} from 'fs';
+import {pki, md, random } from 'node-forge';
+import { defaultDays } from './constants';
 
 const forgeGenerateRSAKey = promisify(pki.rsa.generateKeyPair);
 const forgeGetRandomBytes = promisify(random.getBytes);
 const readFile = promisify(readFileAsync);
 const writeFile = promisify(writeFileAsync);
 
-const debug = createDebug("devcert:util");
+const debug = createDebug('devcert:util');
 
 async function getKeysFromPemFiles(privateKeyFile: string, publicKeyFile?: string): Promise<{ privateKey: string, publicKey: string }> {
   return {
@@ -26,13 +26,13 @@ async function getKeysFromPemFiles(privateKeyFile: string, publicKeyFile?: strin
 
 // Create a random serial number conforming to spec.
 async function createSerial(): Promise<string> {
-  const randBuf = Buffer.from(await forgeGetRandomBytes(9), "binary");
+  const randBuf = Buffer.from(await forgeGetRandomBytes(9), 'binary');
   // X.509 serial numbers must be positive ASN.1 INTEGERS. ASN.1 uses one's
   // complement representation, and JS is two's complement. That means the most
   // significant bit of our JS buffer must be 0. Do this by ensuring the first
   // byte is below 0x80 (128, or 1000 in binary).
   randBuf[0] = randBuf[0] % 0x80;
-  return randBuf.toString("hex");
+  return randBuf.toString('hex');
 }
 
 // Create a self-signed root certificate, to be used as the authority for
@@ -65,16 +65,16 @@ export async function generateCACertificate(
 
   cert.setExtensions([
     {
-      name: "subjectKeyIdentifier"
+      name: 'subjectKeyIdentifier'
     },
     {
-      name: "basicConstraints",
+      name: 'basicConstraints',
       critical: true,
       cA: true,
       pathLenConstraint: 0
     },
     {
-      name: "keyUsage",
+      name: 'keyUsage',
       critical: true,
       dataEncipherment: true,
       digitalSignature: true,
@@ -104,7 +104,7 @@ export async function generateCertificateWithCA(
   
   const { privateKey: caPrivateKey } = await getKeysFromPemFiles(caPrivateKeyPath);
 
-  const rootCa = pki.certificateFromPem(await readFile(caCertPath, "utf8"));
+  const rootCa = pki.certificateFromPem(await readFile(caCertPath, 'utf8'));
 
   const csr = pki.createCertificationRequest();
   csr.publicKey = publicKey;
@@ -125,25 +125,25 @@ export async function generateCertificateWithCA(
   cert.setIssuer(rootCa.subject.attributes);
   cert.setExtensions([
     {
-      name: "basicConstraints",
+      name: 'basicConstraints',
       critical: true,
       cA: false
     },
     {
-      name: "subjectKeyIdentifier"
+      name: 'subjectKeyIdentifier'
     },
     {
-      name: "keyUsage",
+      name: 'keyUsage',
       critical: true,
       digitalSignature: true,
       keyEncipherment: true
     },
     {
-      name: "extKeyUsage",
+      name: 'extKeyUsage',
       serverAuth: true
     },
     {
-      name: "subjectAltName",
+      name: 'subjectAltName',
       altNames: [
         {
           type: 2,
@@ -192,21 +192,19 @@ export async function generateKey(
 }
 
 export function run(cmd: string, options: ExecSyncOptions = {}) {
-  debug(`exec: \`${cmd}\``);
+  debug(`exec: \`${ cmd }\``);
   return execSync(cmd, options);
 }
 
 export function waitForUser() {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     process.stdin.resume();
-    process.stdin.on("data", resolve);
+    process.stdin.on('data', resolve);
   });
 }
 
 export function reportableError(message: string) {
-  return new Error(
-    `${message} | This is a bug in devcert, please report the issue at https://github.com/davewasmer/devcert/issues`
-  );
+  return new Error(`${message} | This is a bug in devcert, please report the issue at https://github.com/davewasmer/devcert/issues`);
 }
 
 export function mktmp() {
@@ -217,17 +215,9 @@ export function mktmp() {
 
 export function sudo(cmd: string): Promise<string | null> {
   return new Promise((resolve, reject) => {
-    sudoPrompt.exec(
-      cmd,
-      { name: "devcert" },
-      (err: Error | null, stdout: string | null, stderr: string | null) => {
-        let error =
-          err ||
-          (typeof stderr === "string" &&
-            stderr.trim().length > 0 &&
-            new Error(stderr));
-        error ? reject(error) : resolve(stdout);
-      }
-    );
+    sudoPrompt.exec(cmd, { name: 'devcert' }, (err: Error | null, stdout: string | null, stderr: string | null) => {
+      let error = err || (typeof stderr === 'string' && stderr.trim().length > 0 && new Error(stderr)) ;
+      error ? reject(error) : resolve(stdout);
+    });
   });
 }

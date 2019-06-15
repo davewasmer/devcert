@@ -23,21 +23,34 @@ export const opensslSerialFilePath = configPath('certificate-authority', 'serial
 export const opensslDatabaseFilePath = configPath('certificate-authority', 'index.txt');
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');
 
-export function withDomainSigningRequestConfig(domain: string, cb: (filepath: string) => void) {
+function generateAltNames(domains: string[]) {
+  return domains
+    .map((domain, index) => `DNS.${index + 1} = ${domain}`)
+    .join("\r\n");
+}
+
+export function withDomainSigningRequestConfig(domains: string | string[], cb: (filepath: string) => void) {
+  const domainList = typeof domains === "string" ? [domains] : domains;
+  const altNames = generateAltNames(domainList);
+
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificate-signing-requests.conf'), 'utf-8');
   let template = makeTemplate(source);
-  let result = template({ domain });
+  let result = template({ domain, altNames });
   writeFile(tmpFile, eol.auto(result));
   cb(tmpFile);
   rm(tmpFile);
 }
 
-export function withDomainCertificateConfig(domain: string, cb: (filepath: string) => void) {
+export function withDomainCertificateConfig(domains: string | string[], cb: (filepath: string) => void) {
+  const domainList = typeof domains === "string" ? [domains] : domains;
+  const altNames = generateAltNames(domainList);
+
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({
+    altNames,
     domain,
     serialFile: opensslSerialFilePath,
     databaseFile: opensslDatabaseFilePath,

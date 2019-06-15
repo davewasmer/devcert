@@ -35,7 +35,7 @@ export interface Options {
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
  */
-export async function certificateFor(domain: string, options: Options = {}) {
+export async function certificateFor(domain: string | string[], options: Options = {}) {
   debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {

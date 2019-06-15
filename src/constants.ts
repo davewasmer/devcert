@@ -25,7 +25,10 @@ export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/
 
 function generatesubjectAltNames(domains: string[]) {
   return domains
-    .map((domain, index) => `DNS.${index + 1} = ${domain}`)
+    .flatMap(domain => { 
+      return [domain, `*.${domain}`] 
+    }
+    .map(domain => `DNS.${index + 1} = ${domain}`)
     .join("\r\n");
 }
 

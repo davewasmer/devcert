@@ -25,15 +25,14 @@ export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/
 
 function generatesubjectAltNames(domains: string[]) {
   return domains
-    .flatMap(domain => { 
-      return [domain, `*.${domain}`] 
-    }
-    .map(domain => `DNS.${index + 1} = ${domain}`)
+    .flatMap(domain => [domain, `*.${domain}`])
+    .map((domain, index) => `DNS.${index + 1} = ${domain}`)
     .join("\r\n");
 }
 
 export function withDomainSigningRequestConfig(domains: string | string[], cb: (filepath: string) => void) {
   const domainList = typeof domains === "string" ? [domains] : domains;
+  const domain = domainList[0];
   const subjectAltNames = generatesubjectAltNames(domainList);
 
   let tmpFile = mktmp();
@@ -47,6 +46,7 @@ export function withDomainSigningRequestConfig(domains: string | string[], cb: (
 
 export function withDomainCertificateConfig(domains: string | string[], cb: (filepath: string) => void) {
   const domainList = typeof domains === "string" ? [domains] : domains;
+  const domain = domainList[0];
   const subjectAltNames = generatesubjectAltNames(domainList);
 
   let tmpFile = mktmp();
@@ -54,7 +54,6 @@ export function withDomainCertificateConfig(domains: string | string[], cb: (fil
   let template = makeTemplate(source);
   let result = template({
     subjectAltNames,
-    domain,
     serialFile: opensslSerialFilePath,
     databaseFile: opensslDatabaseFilePath,
     domainDir: pathForDomain(domain)

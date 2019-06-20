@@ -36,7 +36,8 @@ export interface Options {
  * file, respectively
  */
 export async function certificateFor(domain: string | string[], options: Options = {}) {
-  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+  const domains = Array.isArray(domain) ? domain : [domain];
+  debug(`Certificate requested for ${ domains }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
@@ -50,21 +51,23 @@ export async function certificateFor(domain: string | string[], options: Options
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domain, `private-key.key`);
-  let domainCertPath = pathForDomain(domain, `certificate.crt`);
+  let domainKeyPath = pathForDomain(domains, `private-key.key`);
+  let domainCertPath = pathForDomain(domains, `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
   }
 
-  if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
-    await generateDomainCertificate(domain);
+  if (!exists(pathForDomain(domains, `certificate.crt`))) {
+    debug(`Can't find certificate file for ${ domains }, so it must be the first request for ${ domains }. Generating and caching ...`);
+    await generateDomainCertificate(domains);
   }
 
   if (!options.skipHostsFile) {
-    await currentPlatform.addDomainToHostFileIfMissing(domain);
+    domains.forEach(async (domain) => {
+      await currentPlatform.addDomainToHostFileIfMissing(domain);
+    })
   }
 
   debug(`Returning domain certificate`);

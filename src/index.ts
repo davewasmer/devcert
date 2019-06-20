@@ -35,8 +35,8 @@ export interface Options {
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
  */
-export async function certificateFor(domain: string | string[], options: Options = {}) {
-  const domains = Array.isArray(domain) ? domain : [domain];
+export async function certificateFor(domains: string | string[], options: Options = {}) {
+  const domain = Array.isArray(domains) ? domains[0] : domains;
   debug(`Certificate requested for ${ domains }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
@@ -51,23 +51,27 @@ export async function certificateFor(domain: string | string[], options: Options
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domains, `private-key.key`);
-  let domainCertPath = pathForDomain(domains, `certificate.crt`);
+  let domainKeyPath = pathForDomain(domain, `private-key.key`);
+  let domainCertPath = pathForDomain(domain, `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
   }
 
-  if (!exists(pathForDomain(domains, `certificate.crt`))) {
+  if (!exists(pathForDomain(domain, `certificate.crt`))) {
     debug(`Can't find certificate file for ${ domains }, so it must be the first request for ${ domains }. Generating and caching ...`);
     await generateDomainCertificate(domains);
   }
 
   if (!options.skipHostsFile) {
-    domains.forEach(async (domain) => {
+    if (Array.isArray(domains)) {
+      domains.forEach(async (domain) => {
+        await currentPlatform.addDomainToHostFileIfMissing(domain);
+      }) 
+    } else {
       await currentPlatform.addDomainToHostFileIfMissing(domain);
-    })
+    }
   }
 
   debug(`Returning domain certificate`);

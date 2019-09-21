@@ -59,7 +59,7 @@ export default class MacOSPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      run(`echo '127.0.0.1  ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
+      run(`echo '\n127.0.0.1 ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }
 

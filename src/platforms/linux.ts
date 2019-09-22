@@ -3,7 +3,7 @@ import { existsSync as exists, readFileSync as read, writeFileSync as writeFile 
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
-import { run } from '../utils';
+import { isDomainInHostFile, run } from '../utils';
 import { Options } from '../index';
 import UI from '../user-interface';
 import { Platform } from '.';
@@ -70,7 +70,7 @@ export default class LinuxPlatform implements Platform {
 
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
-    if (!hostsFileContents.includes(domain)) {
+    if (!isDomainInHostFile(hostsFileContents, domain)) {
       run(`echo '127.0.0.1  ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }

@@ -2,7 +2,7 @@ import path from 'path';
 import { writeFileSync as writeFile, existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { run } from '../utils';
+import { isDomainInHostFile, run } from '../utils';
 import { Options } from '../index';
 import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
 import { Platform } from '.';
@@ -58,7 +58,7 @@ export default class MacOSPlatform implements Platform {
 
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
-    if (!hostsFileContents.includes(domain)) {
+    if (!isDomainInHostFile(hostsFileContents, domain)) {
       run(`echo '\n127.0.0.1 ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }

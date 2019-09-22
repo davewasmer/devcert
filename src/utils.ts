@@ -49,3 +49,13 @@ export function sudo(cmd: string): Promise<string | null> {
     });
   });
 }
+
+export function isDomainInHostFile(hostFileContents: string, domain: string): boolean {
+  // Do a check for a full match since a string includes can be fooled by 
+  // a subdomain being present in the host file.
+  const isPresent = hostFileContents
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .filter(item => item === domain).length > 0;
+ return isPresent;
+}

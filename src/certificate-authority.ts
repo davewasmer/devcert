@@ -44,7 +44,7 @@ export default async function installCertificateAuthority(options: Options = {})
   generateKey(rootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCertPath }"`);
+  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCertPath }" -days 7000`);
 
   debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);

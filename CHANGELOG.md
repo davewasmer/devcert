@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.0.2"></a>
+# [1.0.2](https://github.com/davewasmer/devcert/releases/tag/v1.0.2)
+
+### Bug Fixes
+
+* #20: Update `command-exists` dependency
+* #23: Fix issues related to Firefox on Windows and redirecting
+* #24: Update generated certificate to last 7000 days instead of 30
+* 30: Fix false positive on `nss` check
+
+
 <a name="1.0.0"></a>
 # [1.0.0](https://github.com/davewasmer/devcert/compare/v0.3.2...v1.0.0) (2018-04-05)
 

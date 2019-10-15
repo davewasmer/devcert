@@ -43,7 +43,7 @@ export default async function installCertificateAuthority(options: Options = {})
   generateKey(rootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -new -x509 -config "${caSelfSignConfig}" -key "${rootKeyPath}" -out "${rootCACertPath}" -days 7000`);
+  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCACertPath }" -days 7000`);
 
   debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath);
@@ -70,7 +70,7 @@ function scrubOldInsecureVersions() {
   }
 
   // Delete the root certificate keys, as well as the generated app certificates
-  debug(`Checking ${configDir} for legacy files ...`);
+  debug(`Checking ${ configDir } for legacy files ...`);
   [
     path.join(configDir, 'openssl.conf'),
     path.join(configDir, 'devcert-ca-root.key'),
@@ -79,7 +79,7 @@ function scrubOldInsecureVersions() {
     path.join(configDir, 'certs')
   ].forEach((filepath) => {
     if (exists(filepath)) {
-      debug(`Removing legacy file: ${filepath}`)
+      debug(`Removing legacy file: ${ filepath }`)
       rimraf(filepath);
     }
   });

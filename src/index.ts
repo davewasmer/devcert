@@ -41,14 +41,14 @@ export interface Options {
  * If `returnCa` is `read`, include Buffer with contents of CA cert in return value.
  */
 export async function certificateFor(domain: string, options: Options = {}) {
-  debug(`Certificate requested for ${domain}. Skipping certutil install: ${Boolean(options.skipCertutilInstall)}. Skipping hosts file: ${Boolean(options.skipHostsFile)}`);
+  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
   }
 
   if (!isMac && !isLinux && !isWindows) {
-    throw new Error(`Platform not supported: "${process.platform}"`);
+    throw new Error(`Platform not supported: "${ process.platform }"`);
   }
 
   if (!commandExists('openssl')) {
@@ -64,7 +64,7 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${domain}, so it must be the first request for ${domain}. Generating and caching ...`);
+    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
     await generateDomainCertificate(domain);
   }
 

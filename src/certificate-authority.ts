@@ -35,7 +35,6 @@ export default async function installCertificateAuthority(options: Options = {})
 
   debug(`Generating a root certificate authority`);
   let rootKeyPath = mktmp();
-  let rootCertPath = mktmp();
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
   seedConfigFiles();
@@ -44,13 +43,13 @@ export default async function installCertificateAuthority(options: Options = {})
   generateKey(rootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCertPath }" -days 7000`);
+  openssl(`req -new -x509 -config "${caSelfSignConfig}" -key "${rootKeyPath}" -out "${rootCACertPath}" -days 7000`);
 
   debug('Saving certificate authority credentials');
-  await saveCertificateAuthorityCredentials(rootKeyPath, rootCertPath);
+  await saveCertificateAuthorityCredentials(rootKeyPath);
 
   debug(`Adding the root certificate authority to trust stores`);
-  await currentPlatform.addToTrustStores(rootCertPath, options);
+  await currentPlatform.addToTrustStores(rootCACertPath, options);
 }
 
 /**
@@ -71,7 +70,7 @@ function scrubOldInsecureVersions() {
   }
 
   // Delete the root certificate keys, as well as the generated app certificates
-  debug(`Checking ${ configDir } for legacy files ...`);
+  debug(`Checking ${configDir} for legacy files ...`);
   [
     path.join(configDir, 'openssl.conf'),
     path.join(configDir, 'devcert-ca-root.key'),
@@ -80,7 +79,7 @@ function scrubOldInsecureVersions() {
     path.join(configDir, 'certs')
   ].forEach((filepath) => {
     if (exists(filepath)) {
-      debug(`Removing legacy file: ${ filepath }`)
+      debug(`Removing legacy file: ${filepath}`)
       rimraf(filepath);
     }
   });
@@ -101,20 +100,14 @@ function seedConfigFiles() {
 export async function withCertificateAuthorityCredentials(cb: ({ caKeyPath, caCertPath }: { caKeyPath: string, caCertPath: string }) => Promise<void> | void) {
   debug(`Retrieving devcert's certificate authority credentials`);
   let tmpCAKeyPath = mktmp();
-  let tmpCACertPath = mktmp();
   let caKey = await currentPlatform.readProtectedFile(rootCAKeyPath);
-  let caCert = await currentPlatform.readProtectedFile(rootCACertPath);
   writeFile(tmpCAKeyPath, caKey);
-  writeFile(tmpCACertPath, caCert);
-  await cb({ caKeyPath: tmpCAKeyPath, caCertPath: tmpCACertPath });
+  await cb({ caKeyPath: tmpCAKeyPath, caCertPath: rootCACertPath });
   rm(tmpCAKeyPath);
-  rm(tmpCACertPath);
 }
 
-async function saveCertificateAuthorityCredentials(keypath: string, certpath: string) {
+async function saveCertificateAuthorityCredentials(keypath: string) {
   debug(`Saving devcert's certificate authority credentials`);
   let key = readFile(keypath, 'utf-8');
-  let cert = readFile(certpath, 'utf-8');
   await currentPlatform.writeProtectedFile(rootCAKeyPath, key);
-  await currentPlatform.writeProtectedFile(rootCACertPath, cert);
 }

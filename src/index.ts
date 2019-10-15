@@ -8,7 +8,8 @@ import {
   isWindows,
   pathForDomain,
   domainsDir,
-  rootCAKeyPath
+  rootCAKeyPath,
+  rootCACertPath
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority from './certificate-authority';
@@ -18,6 +19,7 @@ import UI, { UserInterface } from './user-interface';
 const debug = createDebug('devcert');
 
 export interface Options {
+  returnCa?: true | 'read',
   skipCertutilInstall?: true,
   skipHostsFile?: true,
   ui?: UserInterface
@@ -34,16 +36,19 @@ export interface Options {
  * Returns a promise that resolves with { key, cert }, where `key` and `cert`
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
+ * 
+ * If `returnCa` is `true`, include path to CA cert as `ca` in return value.
+ * If `returnCa` is `read`, include Buffer with contents of CA cert in return value.
  */
 export async function certificateFor(domain: string, options: Options = {}) {
-  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+  debug(`Certificate requested for ${domain}. Skipping certutil install: ${Boolean(options.skipCertutilInstall)}. Skipping hosts file: ${Boolean(options.skipHostsFile)}`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
   }
 
   if (!isMac && !isLinux && !isWindows) {
-    throw new Error(`Platform not supported: "${ process.platform }"`);
+    throw new Error(`Platform not supported: "${process.platform}"`);
   }
 
   if (!commandExists('openssl')) {
@@ -59,7 +64,7 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
+    debug(`Can't find certificate file for ${domain}, so it must be the first request for ${domain}. Generating and caching ...`);
     await generateDomainCertificate(domain);
   }
 
@@ -68,6 +73,13 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   debug(`Returning domain certificate`);
+  if (options.returnCa) {
+    return {
+      ca: options.returnCa === 'read' ? readFile(rootCACertPath) : rootCACertPath,
+      key: readFile(domainKeyPath),
+      cert: readFile(domainCertPath)
+    }
+  }
   return {
     key: readFile(domainKeyPath),
     cert: readFile(domainCertPath)

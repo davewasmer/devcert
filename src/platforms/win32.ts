@@ -27,7 +27,7 @@ export default class WindowsPlatform implements Platform {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
     try {
-      run(`certutil -addstore -user root ${ certificatePath }`);
+      run(`certutil -addstore -user root "${ certificatePath }"`);
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {

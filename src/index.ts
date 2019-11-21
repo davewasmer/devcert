@@ -56,6 +56,12 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * Returns a promise that resolves with { key, cert }, where `key` and `cert`
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
+ * 
+ * If `options.getCaBuffer` is true, return value will include the ca certificate data
+ * as { ca: Buffer }
+ * 
+ * If `options.getCaPath` is true, return value will include the ca certificate path
+ * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(domain: string, options: O = {} as O): Promise<IReturnData<O>> {
   debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);

@@ -27,7 +27,7 @@ export default class WindowsPlatform implements Platform {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
     try {
-      run(`certutil -addstore -user root ${ certificatePath }`);
+      run(`certutil -addstore -user root "${ certificatePath }"`);
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {
@@ -47,7 +47,7 @@ export default class WindowsPlatform implements Platform {
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(domain)) {
-      await sudo(`echo 127.0.0.1  ${ domain } > ${ this.HOST_FILE_PATH }`);
+      await sudo(`echo 127.0.0.1  ${ domain } >> ${ this.HOST_FILE_PATH }`);
     }
   }
 

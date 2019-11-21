@@ -35,8 +35,9 @@ export interface Options {
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
  */
-export async function certificateFor(domain: string, options: Options = {}) {
-  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+export async function certificateFor(domains: string | string[], options: Options = {}) {
+  const domain = Array.isArray(domains) ? domains[0] : domains;
+  debug(`Certificate requested for ${ domains }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
@@ -59,12 +60,18 @@ export async function certificateFor(domain: string, options: Options = {}) {
   }
 
   if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
-    await generateDomainCertificate(domain);
+    debug(`Can't find certificate file for ${ domains }, so it must be the first request for ${ domains }. Generating and caching ...`);
+    await generateDomainCertificate(domains);
   }
 
   if (!options.skipHostsFile) {
-    await currentPlatform.addDomainToHostFileIfMissing(domain);
+    if (Array.isArray(domains)) {
+      domains.forEach(async (domain) => {
+        await currentPlatform.addDomainToHostFileIfMissing(domain);
+      }) 
+    } else {
+      await currentPlatform.addDomainToHostFileIfMissing(domain);
+    }
   }
 
   debug(`Returning domain certificate`);

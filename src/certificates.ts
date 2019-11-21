@@ -15,7 +15,8 @@ const debug = createDebug('devcert:certificates');
  * individual domain certificates are signed by the devcert root CA (which was
  * added to the OS/browser trust stores), they are trusted.
  */
-export default async function generateDomainCertificate(domain: string): Promise<void> {
+export default async function generateDomainCertificate(domains: string | string[]): Promise<void> {
+  const domain = Array.isArray(domains) ? domains[0] : domains;
   mkdirp(pathForDomain(domain));
 
   debug(`Generating private key for ${ domain }`);

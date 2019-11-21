@@ -27,7 +27,7 @@
   "homepage": "https://github.com/davewasmer/devcert#readme",
   "devDependencies": {
     "standard-version": "^4.3.0",
-    "typescript": "^2.7.0"
+    "typescript": "^2.9.2"
   },
   "dependencies": {
     "@types/configstore": "^2.1.1",
@@ -52,7 +52,7 @@
     "rimraf": "^2.6.2",
     "sudo-prompt": "^8.2.0",
     "tmp": "^0.0.33",
-    "tslib": "^1.8.1"
+    "tslib": "^1.10.0"
   },
   "optionalDependencies": {}
 }

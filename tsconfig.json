@@ -2,6 +2,9 @@
   "compileOnSave": false,
   "compilerOptions": {
       "declaration": true,
+      "lib": [
+        "esnext"
+      ],
       "module": "commonjs",
       "moduleResolution": "node",
       "target": "ES2016",

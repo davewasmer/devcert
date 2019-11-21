@@ -18,11 +18,16 @@ import UI, { UserInterface } from './user-interface';
 
 const debug = createDebug('devcert');
 
-export interface Options {
-  getCaPath?: boolean,
-  getCaBuffer?: boolean,
-  skipCertutilInstall?: true,
-  skipHostsFile?: true,
+export interface Options /* extends Partial<ICaBufferOpts & ICaPathOpts>  */{
+  /** Return the CA certificate data? */
+  getCaBuffer?: boolean;
+  /** Return the path to the CA certificate? */
+  getCaPath?: boolean;
+  /** If `certutil` is not installed already (for updating nss databases; e.g. firefox), do not attempt to install it */
+  skipCertutilInstall?: boolean,
+  /** Do not update your systems host file with the domain name of the certificate */
+  skipHostsFile?: boolean,
+  /** User interface hooks */
   ui?: UserInterface
 }
 
@@ -37,9 +42,6 @@ export interface Options {
  * Returns a promise that resolves with { key, cert }, where `key` and `cert`
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
- * 
- * If `returnCa` is `true`, include path to CA cert as `ca` in return value.
- * If `returnCa` is `read`, include Buffer with contents of CA cert in return value.
  */
 export async function certificateFor(domain: string, options: Options = {}) {
   debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);

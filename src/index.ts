@@ -19,7 +19,8 @@ import UI, { UserInterface } from './user-interface';
 const debug = createDebug('devcert');
 
 export interface Options {
-  returnCa?: true | 'read',
+  getCaPath?: boolean,
+  getCaBuffer?: boolean,
   skipCertutilInstall?: true,
   skipHostsFile?: true,
   ui?: UserInterface

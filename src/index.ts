@@ -76,7 +76,8 @@ export async function certificateFor(domain: string, options: Options = {}) {
   debug(`Returning domain certificate`);
   if (options.returnCa) {
     return {
-      ca: options.returnCa === 'read' ? readFile(rootCACertPath) : rootCACertPath,
+      ca: options.getCaBuffer && readFile(rootCACertPath),
+      caPath: options.getCaPath && rootCACertPath,
       key: readFile(domainKeyPath),
       cert: readFile(domainCertPath)
     }

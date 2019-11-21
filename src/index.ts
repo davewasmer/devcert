@@ -12,7 +12,7 @@ import {
   rootCACertPath
 } from './constants';
 import currentPlatform from './platforms';
-import installCertificateAuthority from './certificate-authority';
+import installCertificateAuthority, { ensureCACertReadable } from './certificate-authority';
 import generateDomainCertificate from './certificates';
 import UI, { UserInterface } from './user-interface';
 
@@ -84,6 +84,9 @@ export async function certificateFor<O extends Options>(domain: string, options:
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
     await installCertificateAuthority(options);
+  } else if (options.getCaBuffer || options.getCaPath) {
+    debug('Root CA is not readable, but it probably is because an earlier version of devcert locked it. Trying to fix...');
+    await ensureCACertReadable(options);
   }
 
   if (!exists(pathForDomain(domain, `certificate.crt`))) {

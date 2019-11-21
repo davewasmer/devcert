@@ -1,6 +1,6 @@
 import createDebug from 'debug';
 import crypto from 'crypto';
-import { writeFileSync as write, readFileSync as read } from 'fs';
+import { writeFileSync as write, readFileSync as read, unlinkSync as unlink } from 'fs';
 import { Options } from '../index';
 import { openCertificateInFirefox } from './shared';
 import { Platform } from '.';
@@ -49,6 +49,10 @@ export default class WindowsPlatform implements Platform {
     if (!hostsFileContents.includes(domain)) {
       await sudo(`echo 127.0.0.1  ${ domain } >> ${ this.HOST_FILE_PATH }`);
     }
+  }
+  
+  async deleteProtectedFile(filepath: string) {
+    unlink(filepath);
   }
 
   async readProtectedFile(filepath: string): Promise<string> {

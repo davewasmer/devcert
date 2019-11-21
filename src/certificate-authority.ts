@@ -111,3 +111,43 @@ async function saveCertificateAuthorityCredentials(keypath: string) {
   let key = readFile(keypath, 'utf-8');
   await currentPlatform.writeProtectedFile(rootCAKeyPath, key);
 }
+
+
+function certErrors(): string {
+  try {
+    openssl(`x509 -in ${ rootCACertPath } -noout`);
+    return '';
+  } catch (e) {
+    return e.toString();
+  }
+}
+
+// This function helps to migrate from v1.0.x to >= v1.1.0.
+/**
+ * Smoothly migrate the certificate storage from v1.0.x to >= v1.1.0.
+ * In v1.1.0 there are new options for retrieving the CA cert directly,
+ * to help third-party Node apps trust the root CA.
+ * 
+ * If a v1.0.x cert already exists, then devcert has written it with
+ * platform.writeProtectedFile(), so an unprivileged readFile cannot access it.
+ * Pre-detect and remedy this; it should only happen once per installation.
+ */
+export async function ensureCACertReadable(options: Options = {}): Promise<void> {
+  if (!certErrors()) {
+    return;
+  }
+  /**
+   * on windows, writeProtectedFile left the cert encrypted on *nix, the cert
+   * has no read permissions either way, openssl will fail and that means we
+   * have to fix it
+   */
+  const caFileContents = await currentPlatform.readProtectedFile(rootCACertPath);
+  await currentPlatform.deleteProtectedFile(rootCACertPath);
+  writeFile(rootCACertPath, caFileContents);
+  
+  // double check that we have a live one
+  const remainingErrors = certErrors();
+  if (remainingErrors) {
+    return installCertificateAuthority(options);
+  }
+}

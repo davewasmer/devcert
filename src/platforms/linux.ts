@@ -75,6 +75,10 @@ export default class LinuxPlatform implements Platform {
     }
   }
 
+  async deleteProtectedFile(filepath: string) {
+    await run(`sudo rm ${filepath}"`);
+  }
+
   async readProtectedFile(filepath: string) {
     return (await run(`sudo cat "${filepath}"`)).toString().trim();
   }

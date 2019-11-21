@@ -62,6 +62,10 @@ export default class MacOSPlatform implements Platform {
       run(`echo '\n127.0.0.1 ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }
+  
+  async deleteProtectedFile(filepath: string) {
+    await run(`sudo rm "${filepath}"`);
+  }
 
   async readProtectedFile(filepath: string) {
     return (await run(`sudo cat "${filepath}"`)).toString().trim();

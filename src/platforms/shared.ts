@@ -7,27 +7,51 @@ import http from 'http';
 import { sync as glob } from 'glob';
 import { readFileSync as readFile, existsSync as exists } from 'fs';
 import { run } from '../utils';
-import { isMac, isLinux } from '../constants';
+import { isMac, isLinux , configDir, getLegacyConfigDir } from '../constants';
 import UI from '../user-interface';
 import { execSync as exec } from 'child_process';
 
 const debug = createDebug('devcert:platforms:shared');
 
 /**
- *  Given a directory or glob pattern of directories, attempt to install the
- *  CA certificate to each directory containing an NSS database.
+ *  Given a directory or glob pattern of directories, run a callback for each db
+ *  directory, with a version argument.
  */
-export async function addCertificateToNSSCertDB(nssDirGlob: string, certPath: string, certutilPath: string): Promise<void> {
-  debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
+function doForNSSCertDB(nssDirGlob: string, callback: (dir: string, version: "legacy" | "modern") => void): void {
   glob(nssDirGlob).forEach((potentialNSSDBDir) => {
     debug(`checking to see if ${ potentialNSSDBDir } is a valid NSS database directory`);
     if (exists(path.join(potentialNSSDBDir, 'cert8.db'))) {
-      debug(`Found legacy NSS database in ${ potentialNSSDBDir }, adding certificate ...`)
-      run(`${ certutilPath } -A -d "${ potentialNSSDBDir }" -t 'C,,' -i "${ certPath }" -n devcert`);
+      debug(`Found legacy NSS database in ${ potentialNSSDBDir }, running callback...`)
+      callback(potentialNSSDBDir, 'legacy');
     }
     if (exists(path.join(potentialNSSDBDir, 'cert9.db'))) {
-      debug(`Found modern NSS database in ${ potentialNSSDBDir }, adding certificate ...`)
-      run(`${ certutilPath } -A -d "sql:${ potentialNSSDBDir }" -t 'C,,' -i "${ certPath }" -n devcert`);
+      debug(`Found modern NSS database in ${ potentialNSSDBDir }, running callback...`)
+      callback(potentialNSSDBDir, 'modern');
+    }
+  });
+}
+
+/**
+ *  Given a directory or glob pattern of directories, attempt to install the
+ *  CA certificate to each directory containing an NSS database.
+ */
+export function addCertificateToNSSCertDB(nssDirGlob: string, certPath: string, certutilPath: string): void {
+  debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
+  doForNSSCertDB(nssDirGlob, (dir, version) => {
+    const dirArg = version === 'modern' ? `sql:${ dir }` : dir;
+    run(`${ certutilPath } -A -d "${ dirArg }" -t 'C,,' -i "${ certPath }" -n devcert`)
+  });
+  debug(`finished scanning & installing certificate in NSS databases in ${ nssDirGlob }`);
+}
+
+export function removeCertificateFromNSSCertDB(nssDirGlob: string, certPath: string, certutilPath: string): void {
+  debug(`trying to remove certificates from NSS databases in ${ nssDirGlob }`);
+  doForNSSCertDB(nssDirGlob, (dir, version) => {
+    const dirArg = version === 'modern' ? `sql:${ dir }` : dir;
+    try {
+      run(`${ certutilPath } -A -d "${ dirArg }" -t 'C,,' -i "${ certPath }" -n devcert`)
+    } catch (e) {
+      debug(`failed to remove ${ certPath } from ${ dir }, continuing. ${ e.toString() }`)
     }
   });
   debug(`finished scanning & installing certificate in NSS databases in ${ nssDirGlob }`);
@@ -103,4 +127,10 @@ export async function openCertificateInFirefox(firefoxPath: string, certPath: st
   run(`${ firefoxPath } http://localhost:${ port }`);
   await UI.waitForFirefoxWizard();
   server.close();
+}
+
+export function assertNotTouchingFiles(filepath: string, operation: string): void {
+    if (!filepath.startsWith(configDir) && !filepath.startsWith(getLegacyConfigDir())) {
+      throw new Error(`Devcert cannot ${ operation } ${ filepath }; it is outside known devcert config directories!`);
+    }
 }

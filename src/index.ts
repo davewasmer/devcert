@@ -12,9 +12,10 @@ import {
   rootCACertPath
 } from './constants';
 import currentPlatform from './platforms';
-import installCertificateAuthority, { ensureCACertReadable } from './certificate-authority';
+import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
 import generateDomainCertificate from './certificates';
 import UI, { UserInterface } from './user-interface';
+export { uninstall };
 
 const debug = createDebug('devcert');
 

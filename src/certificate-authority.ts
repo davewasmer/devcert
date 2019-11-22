@@ -1,21 +1,20 @@
-import path from 'path';
 import {
   unlinkSync as rm,
   readFileSync as readFile,
-  writeFileSync as writeFile,
-  existsSync as exists
+  writeFileSync as writeFile
 } from 'fs';
-import { sync as rimraf } from 'rimraf';
 import createDebug from 'debug';
 
 import {
+  domainsDir,
+  rootCADir,
+  ensureConfigDirs,
+  getLegacyConfigDir,
   rootCAKeyPath,
   rootCACertPath,
   caSelfSignConfig,
   opensslSerialFilePath,
   opensslDatabaseFilePath,
-  isWindows,
-  isLinux,
   caVersionFile
 } from './constants';
 import currentPlatform from './platforms';
@@ -30,10 +29,11 @@ const debug = createDebug('devcert:certificate-authority');
  * per-app certs.
  */
 export default async function installCertificateAuthority(options: Options = {}): Promise<void> {
-  debug(`Checking if older devcert install is present`);
-  scrubOldInsecureVersions();
+  debug(`Uninstalling existing certificates, which will be void once any existing CA is gone`);
+  uninstall();
+  ensureConfigDirs();
 
-  debug(`Generating a root certificate authority`);
+  debug(`Making a temp working directory for files to copied in`);
   let rootKeyPath = mktmp();
 
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
@@ -50,39 +50,6 @@ export default async function installCertificateAuthority(options: Options = {})
 
   debug(`Adding the root certificate authority to trust stores`);
   await currentPlatform.addToTrustStores(rootCACertPath, options);
-}
-
-/**
- * Older versions of devcert left the root certificate keys unguarded and
- * accessible by userland processes. Here, we check for evidence of this older
- * version, and if found, we delete the root certificate keys to remove the
- * attack vector.
- */
-function scrubOldInsecureVersions() {
-  // Use the old verion's logic for determining config directory
-  let configDir: string;
-  if (isWindows && process.env.LOCALAPPDATA) {
-    configDir = path.join(process.env.LOCALAPPDATA, 'devcert', 'config');
-  } else {
-    let uid = process.getuid && process.getuid();
-    let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
-    configDir = path.join(userHome, '.config', 'devcert');
-  }
-
-  // Delete the root certificate keys, as well as the generated app certificates
-  debug(`Checking ${ configDir } for legacy files ...`);
-  [
-    path.join(configDir, 'openssl.conf'),
-    path.join(configDir, 'devcert-ca-root.key'),
-    path.join(configDir, 'devcert-ca-root.crt'),
-    path.join(configDir, 'devcert-ca-version'),
-    path.join(configDir, 'certs')
-  ].forEach((filepath) => {
-    if (exists(filepath)) {
-      debug(`Removing legacy file: ${ filepath }`)
-      rimraf(filepath);
-    }
-  });
 }
 
 /**
@@ -115,7 +82,7 @@ async function saveCertificateAuthorityCredentials(keypath: string) {
 
 function certErrors(): string {
   try {
-    openssl(`x509 -in ${ rootCACertPath } -noout`);
+    openssl(`x509 -in "${ rootCACertPath }" -noout`);
     return '';
   } catch (e) {
     return e.toString();
@@ -141,13 +108,37 @@ export async function ensureCACertReadable(options: Options = {}): Promise<void>
    * has no read permissions either way, openssl will fail and that means we
    * have to fix it
    */
-  const caFileContents = await currentPlatform.readProtectedFile(rootCACertPath);
-  await currentPlatform.deleteProtectedFile(rootCACertPath);
-  writeFile(rootCACertPath, caFileContents);
+  try {
+    const caFileContents = await currentPlatform.readProtectedFile(rootCACertPath);
+    currentPlatform.deleteProtectedFiles(rootCACertPath);
+    writeFile(rootCACertPath, caFileContents);
+  } catch (e) {
+    return installCertificateAuthority(options);
+  }
   
   // double check that we have a live one
   const remainingErrors = certErrors();
   if (remainingErrors) {
     return installCertificateAuthority(options);
   }
+}
+
+/**
+ * Remove as much of the devcert files and state as we can. This is necessary
+ * when generating a new root certificate, and should be available to API
+ * consumers as well.
+ * 
+ * Not all of it will be removable. If certutil is not installed, we'll leave
+ * Firefox alone. We try to remove files with maximum permissions, and if that
+ * fails, we'll silently fail.
+ * 
+ * It's also possible that the command to untrust will not work, and we'll
+ * silently fail that as well; with no existing certificates anymore, the
+ * security exposure there is minimal.
+ */
+export function uninstall(): void {
+  currentPlatform.removeFromTrustStores(rootCACertPath);
+  currentPlatform.deleteProtectedFiles(domainsDir);
+  currentPlatform.deleteProtectedFiles(rootCADir);
+  currentPlatform.deleteProtectedFiles(getLegacyConfigDir());
 }

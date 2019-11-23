@@ -1,8 +1,9 @@
 import createDebug from 'debug';
 import crypto from 'crypto';
 import { writeFileSync as write, readFileSync as read } from 'fs';
+import { sync as rimraf } from 'rimraf';
 import { Options } from '../index';
-import { openCertificateInFirefox } from './shared';
+import { assertNotTouchingFiles, openCertificateInFirefox } from './shared';
 import { Platform } from '.';
 import { run, sudo } from '../utils';
 import UI from '../user-interface';
@@ -43,6 +44,16 @@ export default class WindowsPlatform implements Platform {
       debug('Error opening Firefox, most likely Firefox is not installed');
     }
   }
+  
+  removeFromTrustStores(certificatePath: string) {
+    debug('removing devcert root from Windows OS trust store');
+    try {
+      console.warn('Removing old certificates from trust stores. You may be prompted to grant permission for this. It\'s safe to delete old devcert certificates.');
+      run(`certutil -delstore -user root devcert`);
+    } catch (e) {
+      debug(`failed to remove ${ certificatePath } from Windows OS trust store, continuing. ${ e.toString() }`)
+    }
+  }
 
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
@@ -50,8 +61,14 @@ export default class WindowsPlatform implements Platform {
       await sudo(`echo 127.0.0.1  ${ domain } >> ${ this.HOST_FILE_PATH }`);
     }
   }
+  
+  deleteProtectedFiles(filepath: string) {
+    assertNotTouchingFiles(filepath, 'delete');
+    rimraf(filepath);
+  }
 
   async readProtectedFile(filepath: string): Promise<string> {
+    assertNotTouchingFiles(filepath, 'read');
     if (!encryptionKey) {
       encryptionKey = await UI.getWindowsEncryptionPassword();
     }
@@ -69,6 +86,7 @@ export default class WindowsPlatform implements Platform {
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
+    assertNotTouchingFiles(filepath, 'write');
     if (!encryptionKey) {
       encryptionKey = await UI.getWindowsEncryptionPassword();
     }

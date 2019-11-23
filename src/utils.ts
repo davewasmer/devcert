@@ -4,9 +4,7 @@ import createDebug from 'debug';
 import path from 'path';
 import sudoPrompt from 'sudo-prompt';
 
-import {
-  configPath,
-} from './constants';
+import { configPath } from './constants';
 
 const debug = createDebug('devcert:util');
 

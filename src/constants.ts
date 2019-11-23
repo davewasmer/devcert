@@ -56,6 +56,23 @@ export const rootCADir = configPath('certificate-authority');
 export const rootCAKeyPath = configPath('certificate-authority', 'private-key.key');
 export const rootCACertPath = configPath('certificate-authority', 'certificate.cert');
 
-mkdirp(configDir);
-mkdirp(domainsDir);
-mkdirp(rootCADir);
+
+
+// Exposed for uninstallation purposes.
+export function getLegacyConfigDir(): string {
+  if (isWindows && process.env.LOCALAPPDATA) {
+    return path.join(process.env.LOCALAPPDATA, 'devcert', 'config');
+  } else {
+    let uid = process.getuid && process.getuid();
+    let userHome = (isLinux && uid === 0) ? path.resolve('/usr/local/share') : require('os').homedir();
+    return path.join(userHome, '.config', 'devcert');
+  }
+}
+
+export function ensureConfigDirs() {
+  mkdirp(configDir);
+  mkdirp(domainsDir);
+  mkdirp(rootCADir);
+}
+
+ensureConfigDirs();

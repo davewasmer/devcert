@@ -2,7 +2,7 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
+import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
 import { run } from '../utils';
 import { Options } from '../index';
 import UI from '../user-interface';
@@ -67,6 +67,23 @@ export default class LinuxPlatform implements Platform {
       debug('Chrome does not appear to be installed, skipping Chrome-specific steps...');
     }
   }
+  
+  removeFromTrustStores(certificatePath: string) {
+    try {
+      run(`sudo rm /usr/local/share/ca-certificates/devcert.crt`);
+      run(`sudo update-ca-certificates`); 
+    } catch (e) {
+      debug(`failed to remove ${ certificatePath } from /usr/local/share/ca-certificates, continuing. ${ e.toString() }`);
+    }
+    if (commandExists('certutil')) {
+      if (this.isFirefoxInstalled()) {
+        removeCertificateFromNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, 'certutil');
+      }
+      if (this.isChromeInstalled()) {
+        removeCertificateFromNSSCertDB(this.CHROME_NSS_DIR, certificatePath, 'certutil');
+      }
+    }
+  }
 
   async addDomainToHostFileIfMissing(domain: string) {
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
@@ -75,11 +92,18 @@ export default class LinuxPlatform implements Platform {
     }
   }
 
+  deleteProtectedFiles(filepath: string) {
+    assertNotTouchingFiles(filepath, 'delete');
+    run(`sudo rm -rf "${filepath}"`);
+  }
+
   async readProtectedFile(filepath: string) {
+    assertNotTouchingFiles(filepath, 'read');
     return (await run(`sudo cat "${filepath}"`)).toString().trim();
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
+    assertNotTouchingFiles(filepath, 'write');
     if (exists(filepath)) {
       await run(`sudo rm "${filepath}"`);
     }
@@ -87,7 +111,6 @@ export default class LinuxPlatform implements Platform {
     await run(`sudo chown 0 "${filepath}"`);
     await run(`sudo chmod 600 "${filepath}"`);
   }
-
 
   private isFirefoxInstalled() {
     return exists(this.FIREFOX_BIN_PATH);

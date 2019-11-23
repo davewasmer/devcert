@@ -4,11 +4,12 @@ import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { run } from '../utils';
 import { Options } from '../index';
-import { addCertificateToNSSCertDB, openCertificateInFirefox, closeFirefox } from './shared';
+import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
 import { Platform } from '.';
 
 const debug = createDebug('devcert:platforms:macos');
 
+const getCertUtilPath = () => path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
 
 export default class MacOSPlatform implements Platform {
 
@@ -48,11 +49,23 @@ export default class MacOSPlatform implements Platform {
           return await openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
         }
       }
-      let certutilPath = path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
       await closeFirefox();
-      await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, certutilPath);
+      await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, getCertUtilPath());
     } else {
       debug('Firefox does not appear to be installed, skipping Firefox-specific steps...');
+    }
+  }
+  
+  removeFromTrustStores(certificatePath: string) {
+    debug('Removing devcert root CA from macOS system keychain');
+    try {
+      run(`sudo security remove-trusted-cert -d "${ certificatePath }"`);
+    } catch(e) {
+      debug(`failed to remove ${ certificatePath } from macOS cert store, continuing. ${ e.toString() }`);
+    }
+    if (this.isFirefoxInstalled() && this.isNSSInstalled()) {
+      debug('Firefox install and certutil install detected. Trying to remove root CA from Firefox NSS databases');
+      removeCertificateFromNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, getCertUtilPath());
     }
   }
 
@@ -62,12 +75,19 @@ export default class MacOSPlatform implements Platform {
       run(`echo '\n127.0.0.1 ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
     }
   }
+  
+  deleteProtectedFiles(filepath: string) {
+    assertNotTouchingFiles(filepath, 'delete');
+    run(`sudo rm -rf "${filepath}"`);
+  }
 
   async readProtectedFile(filepath: string) {
+    assertNotTouchingFiles(filepath, 'read');
     return (await run(`sudo cat "${filepath}"`)).toString().trim();
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
+    assertNotTouchingFiles(filepath, 'write');
     if (exists(filepath)) {
       await run(`sudo rm "${filepath}"`);
     }

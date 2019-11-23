@@ -20,6 +20,29 @@ warnings or hoops to jump through.
 
 ## Options
 
+When it installs or upgrades, devcert creates a self-signed certificate
+authority (CA) which it uses to sign all certificates it creates. It will try
+to register this CA with OS keychains in OSX, Linux, and Windows. However,
+some HTTP clients (such as Firefox and NodeJS itself) use their own trusted
+certificate list instead of the operating system's keychain. The `getCaPath`
+and `getCaBuffer` options make the CA available in the `certificateFor()`
+return object itself, so that these programs can choose whether to trust it.
+
+### getCaPath
+
+Set this option to `true` and the returned object will inlude a `caPath`
+property, set to the file path of the certificate authority file. Use this
+path to add the certificate to local trust stores which accept paths as
+arguments, such as NodeJS's builtin environment variable
+`NODE_EXTRA_CA_CERTS`..
+
+### getCaBuffer
+
+Set this option to `true` and the returned object will inlude a `ca`
+property, set to the UTF-8-encoded contents of the certificate authority
+file. Use this path to add the certificate to local trust stores which don't
+use OS settings, lke the examples mentioned above.
+
 ### skipHostsFile
 
 If you supply a custom domain name (i.e. any domain other than `localhost`)

@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.1.0"></a>
+# [1.1.0](https://github.com/davewasmer/devcert/releases/tag/v1.1.0)
+
+### Features
+
+#### [#41](https://github.com/davewasmer/devcert/pull/41): Return CA certificate path/data
+
+- Make the CA certificate available to userland, but keep the key locked protected or encrypted
+- Add options `getCaPath` and `getCaBuffer`
+- [#48](https://github.com/davewasmer/devcert/pull/48): Enhance uninstallation and upgrade routines to revoke old certs and delete old files
+
+### Bug Fixes
+
+* [#37](https://github.com/davewasmer/devcert/pull/37): Append to win32 hostfile, don't overwrite it
+* [#42](https://github.com/davewasmer/devcert/pull/42): Reorder SAN declarations to fix a bug in win32 Firefox
+* [#43](https://github.com/davewasmer/devcert/pull/43): Fix unquote paths in shell commands
+* [#45](https://github.com/davewasmer/devcert/pull/45): Set generated certificate to last 825 days, a limit imposed by OSX Catalina
+
+### Chores
+
+* [#44](https://github.com/davewasmer/devcert/pull/44): Bump lodash from 4.17.4 to 4.17.13
+* [#46](https://github.com/davewasmer/devcert/pull/46): Bump handlebars from 4.0.6 to 4.5.3
+* [#47](https://github.com/davewasmer/devcert/pull/47): Bump lodash.template from 4.4.0 to 4.5.0
+
+
 <a name="1.0.2"></a>
 # [1.0.2](https://github.com/davewasmer/devcert/releases/tag/v1.0.2)
 

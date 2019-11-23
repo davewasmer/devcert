@@ -48,6 +48,7 @@ export default class WindowsPlatform implements Platform {
   removeFromTrustStores(certificatePath: string) {
     debug('removing devcert root from Windows OS trust store');
     try {
+      console.warn('Removing old certificates from trust stores. You may be prompted to grant permission for this. It\'s safe to delete old devcert certificates.');
       run(`certutil -delstore -user root devcert`);
     } catch (e) {
       debug(`failed to remove ${ certificatePath } from Windows OS trust store, continuing. ${ e.toString() }`)

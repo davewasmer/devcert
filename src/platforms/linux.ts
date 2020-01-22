@@ -2,7 +2,7 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
+import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB, HOME } from './shared';
 import { run } from '../utils';
 import { Options } from '../index';
 import UI from '../user-interface';
@@ -12,8 +12,8 @@ const debug = createDebug('devcert:platforms:linux');
 
 export default class LinuxPlatform implements Platform {
 
-  private FIREFOX_NSS_DIR = path.join(process.env.HOME, '.mozilla/firefox/*');
-  private CHROME_NSS_DIR = path.join(process.env.HOME, '.pki/nssdb');
+  private FIREFOX_NSS_DIR = path.join(HOME, '.mozilla/firefox/*');
+  private CHROME_NSS_DIR = path.join(HOME, '.pki/nssdb');
   private FIREFOX_BIN_PATH = '/usr/bin/firefox';
   private CHROME_BIN_PATH = '/usr/bin/google-chrome';
 

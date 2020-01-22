@@ -1,5 +1,5 @@
 {
-  "name": "devcert",
+  "name": "@mnorth/devcert",
   "version": "1.1.0",
   "description": "Generate trusted local SSL/TLS certificates for local SSL development",
   "main": "dist/index.js",

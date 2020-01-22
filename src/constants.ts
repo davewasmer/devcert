@@ -23,25 +23,31 @@ export const opensslSerialFilePath = configPath('certificate-authority', 'serial
 export const opensslDatabaseFilePath = configPath('certificate-authority', 'index.txt');
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');
 
-export function withDomainSigningRequestConfig(domain: string, cb: (filepath: string) => void) {
+function includeWildcards(list: string[]): string[] {
+  return list.reduce((outlist, item) => {
+    outlist.push(item,`*.${item}`);
+    return outlist
+  }, [] as string[])
+}
+
+export function withDomainSigningRequestConfig(commonName: string, alternativeNames: string[], cb: (filepath: string) => void) {
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificate-signing-requests.conf'), 'utf-8');
   let template = makeTemplate(source);
-  let result = template({ domain });
+  let result = template({ commonName, altNames: includeWildcards([commonName, ...alternativeNames]) });
   writeFile(tmpFile, eol.auto(result));
   cb(tmpFile);
   rm(tmpFile);
 }
 
-export function withDomainCertificateConfig(domain: string, cb: (filepath: string) => void) {
+export function withDomainCertificateConfig(commonName: string, alternativeNames: string[], cb: (filepath: string) => void) {
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({
-    domain,
-    serialFile: opensslSerialFilePath,
+    commonName, altNames: includeWildcards([commonName, ...alternativeNames]),    serialFile: opensslSerialFilePath,
     databaseFile: opensslDatabaseFilePath,
-    domainDir: pathForDomain(domain)
+    domainDir: pathForDomain(commonName)
   });
   writeFile(tmpFile, eol.auto(result));
   cb(tmpFile);

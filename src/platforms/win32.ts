@@ -10,7 +10,7 @@ import UI from '../user-interface';
 
 const debug = createDebug('devcert:platforms:windows');
 
-let encryptionKey: string;
+let encryptionKey: string | null;
 
 export default class WindowsPlatform implements Platform {
 

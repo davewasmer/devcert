@@ -4,7 +4,7 @@ import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { run } from '../utils';
 import { Options } from '../index';
-import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
+import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB, HOME } from './shared';
 import { Platform } from '.';
 
 const debug = createDebug('devcert:platforms:macos');
@@ -12,10 +12,9 @@ const debug = createDebug('devcert:platforms:macos');
 const getCertUtilPath = () => path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
 
 export default class MacOSPlatform implements Platform {
-
   private FIREFOX_BUNDLE_PATH = '/Applications/Firefox.app';
   private FIREFOX_BIN_PATH = path.join(this.FIREFOX_BUNDLE_PATH, 'Contents/MacOS/firefox');
-  private FIREFOX_NSS_DIR = path.join(process.env.HOME, 'Library/Application Support/Firefox/Profiles/*');
+  private FIREFOX_NSS_DIR = path.join(HOME, 'Library/Application Support/Firefox/Profiles/*');
 
   private HOST_FILE_PATH = '/etc/hosts';
 

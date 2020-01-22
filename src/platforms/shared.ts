@@ -13,6 +13,10 @@ import { execSync as exec } from 'child_process';
 
 const debug = createDebug('devcert:platforms:shared');
 
+
+export const HOME = process.env.HOME!;
+if (typeof HOME === 'undefined') throw new Error('HOME environment variable was not set. It should be something like "/Users/exampleName"');
+
 /**
  *  Given a directory or glob pattern of directories, run a callback for each db
  *  directory, with a version argument.
@@ -111,7 +115,9 @@ export async function openCertificateInFirefox(firefoxPath: string, certPath: st
   debug('Adding devert to Firefox trust stores manually. Launching a webserver to host our certificate temporarily ...');
   let port = await getPort();
   let server = http.createServer(async (req, res) => {
-    let { pathname } = url.parse(req.url);
+    const { url: reqUrl } = req;
+    if (!reqUrl) throw new Error(`Request url was found to be empty: "${JSON.stringify(reqUrl)}"`)
+    let { pathname } = url.parse(reqUrl);
     if (pathname === '/certificate') {
       res.writeHead(200, { 'Content-type': 'application/x-x509-ca-cert' });
       res.write(readFile(certPath));

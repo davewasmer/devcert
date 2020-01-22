@@ -64,8 +64,18 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * If `options.getCaPath` is true, return value will include the ca certificate path
  * as { caPath: string }
  */
-export async function certificateFor<O extends Options>(domain: string, options: O = {} as O): Promise<IReturnData<O>> {
-  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+export async function certificateFor<O extends Options>(domain: string, options?: O): Promise<IReturnData<O>>;
+export async function certificateFor<O extends Options>(commonName: string, alternativeNames: string[], options?: O): Promise<IReturnData<O>>;
+export async function certificateFor<O extends Options>(commonName: string, optionsOrAlternativeNames: string[] | O, options?: O): Promise<IReturnData<O>> {
+  if (Array.isArray(optionsOrAlternativeNames)) {
+    return certificateForImpl(commonName, optionsOrAlternativeNames, options);
+  } else {
+    return certificateForImpl(commonName, [], options);
+  }
+}
+
+async function certificateForImpl<O extends Options>(commonName: string, alternativeNames: string[], options: O = {} as O): Promise<IReturnData<O>> {
+  debug(`Certificate requested for ${ commonName }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
@@ -79,8 +89,8 @@ export async function certificateFor<O extends Options>(domain: string, options:
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domain, `private-key.key`);
-  let domainCertPath = pathForDomain(domain, `certificate.crt`);
+  let domainKeyPath = pathForDomain(commonName, `private-key.key`);
+  let domainCertPath = pathForDomain(commonName, `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
@@ -90,13 +100,13 @@ export async function certificateFor<O extends Options>(domain: string, options:
     await ensureCACertReadable(options);
   }
 
-  if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
-    await generateDomainCertificate(domain);
+  if (!exists(pathForDomain(commonName, `certificate.crt`))) {
+    debug(`Can't find certificate file for ${ commonName }, so it must be the first request for ${ commonName }. Generating and caching ...`);
+    await generateDomainCertificate(commonName, alternativeNames);
   }
 
   if (!options.skipHostsFile) {
-    await currentPlatform.addDomainToHostFileIfMissing(domain);
+    await currentPlatform.addDomainToHostFileIfMissing(commonName);
   }
 
   debug(`Returning domain certificate`);
@@ -111,14 +121,14 @@ export async function certificateFor<O extends Options>(domain: string, options:
   return ret;
 }
 
-export function hasCertificateFor(domain: string) {
-  return exists(pathForDomain(domain, `certificate.crt`));
+export function hasCertificateFor(commonName: string) {
+  return exists(pathForDomain(commonName, `certificate.crt`));
 }
 
 export function configuredDomains() {
   return readdir(domainsDir);
 }
 
-export function removeDomain(domain: string) {
-  return rimraf.sync(pathForDomain(domain));
+export function removeDomain(commonName: string) {
+  return rimraf.sync(pathForDomain(commonName));
 }

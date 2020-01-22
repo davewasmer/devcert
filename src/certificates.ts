@@ -15,24 +15,24 @@ const debug = createDebug('devcert:certificates');
  * individual domain certificates are signed by the devcert root CA (which was
  * added to the OS/browser trust stores), they are trusted.
  */
-export default async function generateDomainCertificate(domain: string): Promise<void> {
-  mkdirp(pathForDomain(domain));
+export default async function generateDomainCertificate(commonName: string, alternativeNames: string[]): Promise<void> {
+  mkdirp(pathForDomain(commonName));
 
-  debug(`Generating private key for ${ domain }`);
-  let domainKeyPath = pathForDomain(domain, 'private-key.key');
+  debug(`Generating private key for ${ commonName }`);
+  let domainKeyPath = pathForDomain(commonName, 'private-key.key');
   generateKey(domainKeyPath);
 
-  debug(`Generating certificate signing request for ${ domain }`);
-  let csrFile = pathForDomain(domain, `certificate-signing-request.csr`);
-  withDomainSigningRequestConfig(domain, (configpath) => {
+  debug(`Generating certificate signing request for ${ commonName }`);
+  let csrFile = pathForDomain(commonName, `certificate-signing-request.csr`);
+  withDomainSigningRequestConfig(commonName, alternativeNames, (configpath) => {
     openssl(`req -new -config "${ configpath }" -key "${ domainKeyPath }" -out "${ csrFile }"`);
   });
 
-  debug(`Generating certificate for ${ domain } from signing request and signing with root CA`);
-  let domainCertPath = pathForDomain(domain, `certificate.crt`);
+  debug(`Generating certificate for ${ commonName } from signing request and signing with root CA`);
+  let domainCertPath = pathForDomain(commonName, `certificate.crt`);
 
   await withCertificateAuthorityCredentials(({ caKeyPath, caCertPath }) => {
-    withDomainCertificateConfig(domain, (domainCertConfigPath) => {
+    withDomainCertificateConfig(commonName, alternativeNames, (domainCertConfigPath) => {
       openssl(`ca -config "${ domainCertConfigPath }" -in "${ csrFile }" -out "${ domainCertPath }" -keyfile "${ caKeyPath }" -cert "${ caCertPath }" -days 825 -batch`)
     });
   });

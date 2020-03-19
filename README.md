@@ -116,12 +116,12 @@ https.createServer(ssl, app).listen(3000);
 If you are developing with Docker, one option is to install `devcert` into a base folder in your home directory and 
 generate certificates for all of your local Docker projects. See comments and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
 
-While not elegant, you only really need to do this as you add new domains locally, which is not very often.
+While not elegant, you only really need to do this as often as you add new domains locally, which is probably not very often.
 
 The general script would look something like:
 
 ```js
-// example: make a directory in home directory such as devcert-util
+// example: make a directory in home directory such as ~/devcert-util
 // ~/devcert-util/generate.js
 const fs = require('fs');
 const devcert = require('devcert');
@@ -144,6 +144,8 @@ An easy way to use the files generated from above script is to copy the `~/devce
 ```
 # local-docker-project-root/
 🗀 certs/
+  🗎 tls.key
+  🗎 tls.cert
 ``` 
 
 And add this line to your `.gitignore`:

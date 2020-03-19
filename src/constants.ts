@@ -16,29 +16,43 @@ export const configDir = applicationConfigPath('devcert');
 export const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
 export const domainsDir = configPath('domains');
-export const pathForDomain: (domain: string, ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
+export const pathForDomain: (domain: string | string[], ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
 
 export const caVersionFile = configPath('devcert-ca-version');
 export const opensslSerialFilePath = configPath('certificate-authority', 'serial');
 export const opensslDatabaseFilePath = configPath('certificate-authority', 'index.txt');
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');
 
-export function withDomainSigningRequestConfig(domain: string, cb: (filepath: string) => void) {
+function generatesubjectAltNames(domains: string[]): string {
+  return domains
+    .reduce((dnsEntries, domain) =>
+      dnsEntries.concat([
+        `DNS.${dnsEntries.length + 1} = ${domain}`,
+        `DNS.${dnsEntries.length + 2} = *.${domain}`,
+      ]), [] as string[])
+    .join("\r\n");
+}
+
+export function withDomainSigningRequestConfig(domains: string[], cb: (filepath: string) => void) {
+  const domain = domains[0];
+  const subjectAltNames = generatesubjectAltNames(domains);
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificate-signing-requests.conf'), 'utf-8');
   let template = makeTemplate(source);
-  let result = template({ domain });
+  let result = template({domain, subjectAltNames});
   writeFile(tmpFile, eol.auto(result));
   cb(tmpFile);
   rm(tmpFile);
 }
 
-export function withDomainCertificateConfig(domain: string, cb: (filepath: string) => void) {
+export function withDomainCertificateConfig(domains: string[], cb: (filepath: string) => void) {
+  const domain = domains[0];
+  const subjectAltNames = generatesubjectAltNames(domains);
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
   let result = template({
-    domain,
+    subjectAltNames,
     serialFile: opensslSerialFilePath,
     databaseFile: opensslDatabaseFilePath,
     domainDir: pathForDomain(domain)

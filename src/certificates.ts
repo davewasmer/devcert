@@ -15,25 +15,25 @@ const debug = createDebug('devcert:certificates');
  * individual domain certificates are signed by the devcert root CA (which was
  * added to the OS/browser trust stores), they are trusted.
  */
-export default async function generateDomainCertificate(domain: string): Promise<void> {
-  mkdirp(pathForDomain(domain));
+export default async function generateDomainCertificate(domains: string[]): Promise<void> {
+  mkdirp(pathForDomain(domains));
 
-  debug(`Generating private key for ${ domain }`);
-  let domainKeyPath = pathForDomain(domain, 'private-key.key');
+  debug(`Generating private key for ${domains}`);
+  let domainKeyPath = pathForDomain(domains, 'private-key.key');
   generateKey(domainKeyPath);
 
-  debug(`Generating certificate signing request for ${ domain }`);
-  let csrFile = pathForDomain(domain, `certificate-signing-request.csr`);
-  withDomainSigningRequestConfig(domain, (configpath) => {
-    openssl(`req -new -config "${ configpath }" -key "${ domainKeyPath }" -out "${ csrFile }"`);
+  debug(`Generating certificate signing request for ${domains}`);
+  let csrFile = pathForDomain(domains, `certificate-signing-request.csr`);
+  withDomainSigningRequestConfig(domains, (configpath) => {
+    openssl(`req -new -config "${configpath}" -key "${domainKeyPath}" -out "${csrFile}"`);
   });
 
-  debug(`Generating certificate for ${ domain } from signing request and signing with root CA`);
-  let domainCertPath = pathForDomain(domain, `certificate.crt`);
+  debug(`Generating certificate for ${domains} from signing request and signing with root CA`);
+  let domainCertPath = pathForDomain(domains, `certificate.crt`);
 
-  await withCertificateAuthorityCredentials(({ caKeyPath, caCertPath }) => {
-    withDomainCertificateConfig(domain, (domainCertConfigPath) => {
-      openssl(`ca -config "${ domainCertConfigPath }" -in "${ csrFile }" -out "${ domainCertPath }" -keyfile "${ caKeyPath }" -cert "${ caCertPath }" -days 825 -batch`)
+  await withCertificateAuthorityCredentials(({caKeyPath, caCertPath}) => {
+    withDomainCertificateConfig(domains, (domainCertConfigPath) => {
+      openssl(`ca -config "${domainCertConfigPath}" -in "${csrFile}" -out "${domainCertPath}" -keyfile "${caKeyPath}" -cert "${caCertPath}" -days 825 -batch`)
     });
   });
 }

@@ -64,8 +64,9 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * If `options.getCaPath` is true, return value will include the ca certificate path
  * as { caPath: string }
  */
-export async function certificateFor<O extends Options>(domain: string, options: O = {} as O): Promise<IReturnData<O>> {
-  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
+export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
+  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains]
+  debug(`Certificate requested for ${domains}. Skipping certutil install: ${Boolean(options.skipCertutilInstall)}. Skipping hosts file: ${Boolean(options.skipHostsFile)}`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);
@@ -79,8 +80,8 @@ export async function certificateFor<O extends Options>(domain: string, options:
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domain, `private-key.key`);
-  let domainCertPath = pathForDomain(domain, `certificate.crt`);
+  let domainKeyPath = pathForDomain(domains, `private-key.key`);
+  let domainCertPath = pathForDomain(domains, `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
@@ -90,13 +91,15 @@ export async function certificateFor<O extends Options>(domain: string, options:
     await ensureCACertReadable(options);
   }
 
-  if (!exists(pathForDomain(domain, `certificate.crt`))) {
-    debug(`Can't find certificate file for ${ domain }, so it must be the first request for ${ domain }. Generating and caching ...`);
-    await generateDomainCertificate(domain);
+  if (!exists(pathForDomain(domains, `certificate.crt`))) {
+    debug(`Can't find certificate file for ${domains}, so it must be the first request for ${domains}. Generating and caching ...`);
+    await generateDomainCertificate(domains);
   }
 
   if (!options.skipHostsFile) {
-    await currentPlatform.addDomainToHostFileIfMissing(domain);
+    domains.forEach(async (domain) => {
+      await currentPlatform.addDomainToHostFileIfMissing(domain);
+    })
   }
 
   debug(`Returning domain certificate`);

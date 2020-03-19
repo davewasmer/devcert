@@ -161,11 +161,11 @@ const fs = require('fs');
 const Express = require('express');
 const app = new Express();
 https
-		.createServer({
-			key: fs.readFileSync('./certs/tls.key'),
-			cert: fs.readFileSync('./certs/tls.cert')
-		}, app)
-    .listen(3000);
+  .createServer({
+    key: fs.readFileSync('./certs/tls.key'),
+    cert: fs.readFileSync('./certs/tls.cert')
+  }, app)
+  .listen(3000);
 ```
 
 Also works with webpack dev server or similar technologies:
@@ -177,14 +177,14 @@ module.exports = {
   //...
   devServer: {
     contentBase: join(__dirname, 'dist'),
-		host: '0.0.0.0',
-		public: 'local.api.example.com',
-		port: 3000,
-		publicPath: '/',
-		https: {
-			key: fs.readFileSync('./certs/tls.key'),
-			cert: fs.readFileSync('./certs/tls.cert')
-		}
+    host: '0.0.0.0',
+    public: 'local.api.example.com',
+    port: 3000,
+    publicPath: '/',
+    https: {
+      key: fs.readFileSync('./certs/tls.key'),
+      cert: fs.readFileSync('./certs/tls.cert')
+    }
   }
 };
 ```

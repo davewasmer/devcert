@@ -99,8 +99,8 @@ The `certutil` tooling is installed in OS-specific ways:
 
 ## Multiple domains (SAN)
 If you are developing a multi-tenant app or have many apps locally, you can generate a security
-certificate using devcert to also use the [Subject Alternative Name](https://en.wikipedia.org/wiki/Subject_Alternative_Name)
-extension.
+certificate using `devcert` to also use the [Subject Alternative Name](https://en.wikipedia.org/wiki/Subject_Alternative_Name)
+extension, just pass an array of domains instead.
 
 ```js
 let ssl = await devcert.certificateFor([
@@ -113,15 +113,16 @@ https.createServer(ssl, app).listen(3000);
 ```
 
 ## Docker and local development
-If you are developing with Docker, you can just install `devcert` into a base folder in your home directory, and 
-generate certificates for all of your local Docker projects. See also and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
+If you are developing with Docker, one option is to install `devcert` into a base folder in your home directory and 
+generate certificates for all of your local Docker projects. See comments and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
 
 While not elegant, you only really need to do this as you add new domains locally, which is not very often.
 
 The general script would look something like:
 
 ```js
-// inside ~/
+// example: make a directory in home directory such as devcert-util
+// ~/devcert-util/generate.js
 const fs = require('fs');
 const devcert = require('devcert');
 
@@ -139,7 +140,7 @@ devcert.certificateFor([
 	.catch(console.error);
 ```
 
-An easy way to use the files generated from above script is to copy the `~/certs` folder into your Docker projects:
+An easy way to use the files generated from above script is to copy the `~/devcert-util/certs` folder into your Docker projects:
 ```
 # local-docker-project-root/
 🗀 certs/
@@ -152,7 +153,7 @@ certs/
 
 These two files can now easily be used by any project, be it Node.js or something else.
 
-In Node, within Docker, simply load the copied certificate files into an https server:
+In Node, within Docker, simply load the copied certificate files into your https server:
 ```js
 const fs = require('fs');
 const Express = require('express');
@@ -165,6 +166,7 @@ https
     .listen(3000);
 ```
 
+Also works with webpack dev server or similar technologies:
 ```js
 // webpack.config.js
 const fs = require('fs');

@@ -114,11 +114,14 @@ https.createServer(ssl, app).listen(3000);
 
 ## Docker and local development
 If you are developing with Docker, you can just install `devcert` into a base folder in your home directory, and 
-generate certificates for all of your local Docker projects. See also [this issue](https://github.com/davewasmer/devcert/issues/17)
+generate certificates for all of your local Docker projects. See also and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
+
+While not elegant, you only really need to do this as you add new domains locally, which is not very often.
 
 The general script would look something like:
 
 ```js
+// inside ~/
 const fs = require('fs');
 const devcert = require('devcert');
 
@@ -136,7 +139,7 @@ devcert.certificateFor([
 	.catch(console.error);
 ```
 
-An easy way to use these is to copy the certs folder into your Docker projects:
+An easy way to use the files generated from above script is to copy the `~/certs` folder into your Docker projects:
 ```
 # local-docker-project-root/
 🗀 certs/
@@ -149,7 +152,7 @@ certs/
 
 These two files can now easily be used by any project, be it Node.js or something else.
 
-In Node, within Docker, simply load the certificate files into an https server:
+In Node, within Docker, simply load the copied certificate files into an https server:
 ```js
 const fs = require('fs');
 const Express = require('express');

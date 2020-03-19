@@ -16,20 +16,20 @@ const debug = createDebug('devcert:certificates');
  * added to the OS/browser trust stores), they are trusted.
  */
 export default async function generateDomainCertificate(domains: string[]): Promise<void> {
-  mkdirp(pathForDomain(domains));
+  mkdirp(pathForDomain(domains[0]));
 
   debug(`Generating private key for ${domains}`);
-  let domainKeyPath = pathForDomain(domains, 'private-key.key');
+  let domainKeyPath = pathForDomain(domains[0], 'private-key.key');
   generateKey(domainKeyPath);
 
   debug(`Generating certificate signing request for ${domains}`);
-  let csrFile = pathForDomain(domains, `certificate-signing-request.csr`);
+  let csrFile = pathForDomain(domains[0], `certificate-signing-request.csr`);
   withDomainSigningRequestConfig(domains, (configpath) => {
     openssl(`req -new -config "${configpath}" -key "${domainKeyPath}" -out "${csrFile}"`);
   });
 
   debug(`Generating certificate for ${domains} from signing request and signing with root CA`);
-  let domainCertPath = pathForDomain(domains, `certificate.crt`);
+  let domainCertPath = pathForDomain(domains[0], `certificate.crt`);
 
   await withCertificateAuthorityCredentials(({caKeyPath, caCertPath}) => {
     withDomainCertificateConfig(domains, (domainCertConfigPath) => {

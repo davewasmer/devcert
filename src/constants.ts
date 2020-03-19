@@ -16,7 +16,7 @@ export const configDir = applicationConfigPath('devcert');
 export const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
 export const domainsDir = configPath('domains');
-export const pathForDomain: (domain: string | string[], ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
+export const pathForDomain: (domain: string, ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
 
 export const caVersionFile = configPath('devcert-ca-version');
 export const opensslSerialFilePath = configPath('certificate-authority', 'serial');

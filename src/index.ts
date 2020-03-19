@@ -80,8 +80,8 @@ export async function certificateFor<O extends Options>(requestedDomains: string
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domains, `private-key.key`);
-  let domainCertPath = pathForDomain(domains, `certificate.crt`);
+  let domainKeyPath = pathForDomain(domains[0], `private-key.key`);
+  let domainCertPath = pathForDomain(domains[0], `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
@@ -91,7 +91,7 @@ export async function certificateFor<O extends Options>(requestedDomains: string
     await ensureCACertReadable(options);
   }
 
-  if (!exists(pathForDomain(domains, `certificate.crt`))) {
+  if (!exists(pathForDomain(domains[0], `certificate.crt`))) {
     debug(`Can't find certificate file for ${domains}, so it must be the first request for ${domains}. Generating and caching ...`);
     await generateDomainCertificate(domains);
   }

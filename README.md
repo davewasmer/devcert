@@ -97,6 +97,91 @@ The `certutil` tooling is installed in OS-specific ways:
   so devcert will simply fallback to the wizard approach for Firefox outlined
   above)
 
+## Multiple domains (SAN)
+If you are developing a multi-tenant app or have many apps locally, you can generate a security
+certificate using devcert to also use the [Subject Alternative Name](https://en.wikipedia.org/wiki/Subject_Alternative_Name)
+extension.
+
+```js
+let ssl = await devcert.certificateFor([
+	'localhost',
+	'local.api.example.com',
+	'local.example.com',
+	'local.auth.example.com'
+]);
+https.createServer(ssl, app).listen(3000);
+```
+
+## Docker and local development
+If you are developing with Docker, you can just install `devcert` into a base folder in your home directory, and 
+generate certificates for all of your local Docker projects. See also [this issue](https://github.com/davewasmer/devcert/issues/17)
+
+The general script would look something like:
+
+```js
+const fs = require('fs');
+const devcert = require('devcert');
+
+// or if its just one domain - devcert.certificateFor('local.example.com')
+devcert.certificateFor([
+	'localhost',
+	'local.api.example.com',
+	'local.example.com',
+	'local.auth.example.com'
+])
+	.then(({key, cert}) => {
+		fs.writeFileSync('./certs/tls.key', key);
+		fs.writeFileSync('./certs/tls.cert', cert);
+	})
+	.catch(console.error);
+```
+
+An easy way to use these is to copy the certs folder into your Docker projects:
+```
+# local-docker-project-root/
+🗀 certs/
+``` 
+
+And add this line to your `.gitignore`:
+```
+certs/
+```
+
+These two files can now easily be used by any project, be it Node.js or something else.
+
+In Node, within Docker, simply load the certificate files into an https server:
+```js
+const fs = require('fs');
+const Express = require('express');
+const app = new Express();
+https
+		.createServer({
+			key: fs.readFileSync('./certs/tls.key'),
+			cert: fs.readFileSync('./certs/tls.cert')
+		}, app)
+    .listen(3000);
+```
+
+```js
+// webpack.config.js
+const fs = require('fs');
+
+module.exports = {
+  //...
+  devServer: {
+    contentBase: join(__dirname, 'dist'),
+		host: '0.0.0.0',
+		public: 'local.api.example.com',
+		port: 3000,
+		publicPath: '/',
+		https: {
+			key: fs.readFileSync('./certs/tls.key'),
+			cert: fs.readFileSync('./certs/tls.cert')
+		}
+  }
+};
+```
+
 ## How it works
 
 When you ask for a development certificate, devcert will first check to see

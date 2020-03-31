@@ -4,7 +4,7 @@ import { sync as mkdirp } from 'mkdirp';
 import { template as makeTemplate } from 'lodash';
 import applicationConfigPath = require('application-config-path');
 import eol from 'eol';
-import { mktmp } from './utils';
+import {mktmp, numericHash} from './utils';
 
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';
@@ -15,6 +15,32 @@ export const isWindows = process.platform === 'win32';
 export const configDir = applicationConfigPath('devcert');
 export const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
+const getFilteredDomains = (domains: string[]) =>
+  Array.from(
+    domains
+      .sort((a, b) => b.length - a.length)
+      .reduce((filteredList, domain) =>
+        Array.from(filteredList)
+          .reduce((matches, item) => {
+            if (item.indexOf(domain) > -1) {
+              matches.add(domain);
+            } else if (domain.indexOf(item) === -1 && item.indexOf(domain) === -1) {
+              matches.add(item);
+              matches.add(domain);
+            } else {
+              matches.add(item);
+            }
+
+            return matches;
+          }, new Set()
+          ), new Set([domains[0]])
+      )
+  ).sort();
+
+export const getStableDomainPath = (domains: string[]) =>
+  domains.length === 1 ?
+    domains[0] :
+    'san-' + numericHash(getFilteredDomains(domains).join(''));
 export const domainsDir = configPath('domains');
 export const pathForDomain: (domain: string, ...pathSegments: string[]) => string = path.join.bind(path, domainsDir)
 
@@ -23,7 +49,7 @@ export const opensslSerialFilePath = configPath('certificate-authority', 'serial
 export const opensslDatabaseFilePath = configPath('certificate-authority', 'index.txt');
 export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/certificate-authority-self-signing.conf');
 
-function generatesubjectAltNames(domains: string[]): string {
+function generateSubjectAltNames(domains: string[]): string {
   return domains
     .reduce((dnsEntries, domain) =>
       dnsEntries.concat([
@@ -35,7 +61,7 @@ function generatesubjectAltNames(domains: string[]): string {
 
 export function withDomainSigningRequestConfig(domains: string[], cb: (filepath: string) => void) {
   const domain = domains[0];
-  const subjectAltNames = generatesubjectAltNames(domains);
+  const subjectAltNames = generateSubjectAltNames(domains);
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificate-signing-requests.conf'), 'utf-8');
   let template = makeTemplate(source);
@@ -46,8 +72,8 @@ export function withDomainSigningRequestConfig(domains: string[], cb: (filepath:
 }
 
 export function withDomainCertificateConfig(domains: string[], cb: (filepath: string) => void) {
-  const domain = domains[0];
-  const subjectAltNames = generatesubjectAltNames(domains);
+  const domainPath = getStableDomainPath(domains);
+  const subjectAltNames = generateSubjectAltNames(domains);
   let tmpFile = mktmp();
   let source = readFile(path.join(__dirname, '../openssl-configurations/domain-certificates.conf'), 'utf-8');
   let template = makeTemplate(source);
@@ -55,7 +81,7 @@ export function withDomainCertificateConfig(domains: string[], cb: (filepath: st
     subjectAltNames,
     serialFile: opensslSerialFilePath,
     databaseFile: opensslDatabaseFilePath,
-    domainDir: pathForDomain(domain)
+    domainDir: pathForDomain(domainPath)
   });
   writeFile(tmpFile, eol.auto(result));
   cb(tmpFile);

@@ -7,6 +7,7 @@ import {
   isLinux,
   isWindows,
   pathForDomain,
+  getStableDomainPath,
   domainsDir,
   rootCAKeyPath,
   rootCACertPath
@@ -65,7 +66,8 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
-  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains]
+  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
+  const domainPath = getStableDomainPath(domains);
   debug(`Certificate requested for ${domains}. Skipping certutil install: ${Boolean(options.skipCertutilInstall)}. Skipping hosts file: ${Boolean(options.skipHostsFile)}`);
 
   if (options.ui) {
@@ -73,15 +75,15 @@ export async function certificateFor<O extends Options>(requestedDomains: string
   }
 
   if (!isMac && !isLinux && !isWindows) {
-    throw new Error(`Platform not supported: "${ process.platform }"`);
+    throw new Error(`Platform not supported: "${process.platform}"`);
   }
 
   if (!commandExists('openssl')) {
     throw new Error('OpenSSL not found: OpenSSL is required to generate SSL certificates - make sure it is installed and available in your PATH');
   }
 
-  let domainKeyPath = pathForDomain(domains[0], `private-key.key`);
-  let domainCertPath = pathForDomain(domains[0], `certificate.crt`);
+  let domainKeyPath = pathForDomain(domainPath, `private-key.key`);
+  let domainCertPath = pathForDomain(domainPath, `certificate.crt`);
 
   if (!exists(rootCAKeyPath)) {
     debug('Root CA is not installed yet, so it must be our first run. Installing root CA ...');
@@ -91,7 +93,7 @@ export async function certificateFor<O extends Options>(requestedDomains: string
     await ensureCACertReadable(options);
   }
 
-  if (!exists(pathForDomain(domains[0], `certificate.crt`))) {
+  if (!exists(pathForDomain(domainPath, `certificate.crt`))) {
     debug(`Can't find certificate file for ${domains}, so it must be the first request for ${domains}. Generating and caching ...`);
     await generateDomainCertificate(domains);
   }
@@ -114,14 +116,18 @@ export async function certificateFor<O extends Options>(requestedDomains: string
   return ret;
 }
 
-export function hasCertificateFor(domain: string) {
-  return exists(pathForDomain(domain, `certificate.crt`));
+export function hasCertificateFor(requestedDomains: string | string[]) {
+  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
+  const domainPath = getStableDomainPath(domains);
+  return exists(pathForDomain(domainPath, `certificate.crt`));
 }
 
 export function configuredDomains() {
   return readdir(domainsDir);
 }
 
-export function removeDomain(domain: string) {
-  return rimraf.sync(pathForDomain(domain));
+export function removeDomain(requestedDomains: string | string[]) {
+  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
+  const domainPath = getStableDomainPath(domains);
+  return rimraf.sync(pathForDomain(domainPath));
 }

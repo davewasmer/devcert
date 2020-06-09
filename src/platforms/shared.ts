@@ -39,7 +39,7 @@ export function addCertificateToNSSCertDB(nssDirGlob: string, certPath: string, 
   debug(`trying to install certificate into NSS databases in ${ nssDirGlob }`);
   doForNSSCertDB(nssDirGlob, (dir, version) => {
     const dirArg = version === 'modern' ? `sql:${ dir }` : dir;
-    run(`${ certutilPath } -A -d "${ dirArg }" -t 'C,,' -i "${ certPath }" -n devcert`)
+      run(certutilPath, ['-A', '-d', dirArg, '-t', 'C,,', '-i', certPath, '-n', 'devcert']);
   });
   debug(`finished scanning & installing certificate in NSS databases in ${ nssDirGlob }`);
 }
@@ -49,7 +49,7 @@ export function removeCertificateFromNSSCertDB(nssDirGlob: string, certPath: str
   doForNSSCertDB(nssDirGlob, (dir, version) => {
     const dirArg = version === 'modern' ? `sql:${ dir }` : dir;
     try {
-      run(`${ certutilPath } -A -d "${ dirArg }" -t 'C,,' -i "${ certPath }" -n devcert`)
+      run(certutilPath, ['-A', '-d', dirArg, '-t', 'C,,', '-i', certPath, '-n', 'devcert']);
     } catch (e) {
       debug(`failed to remove ${ certPath } from ${ dir }, continuing. ${ e.toString() }`)
     }
@@ -124,7 +124,7 @@ export async function openCertificateInFirefox(firefoxPath: string, certPath: st
   }).listen(port);
   debug('Certificate server is up. Printing instructions for user and launching Firefox with hosted certificate URL');
   await UI.startFirefoxWizard(`http://localhost:${ port }`);
-  run(`${ firefoxPath } http://localhost:${ port }`);
+  run(firefoxPath, [`http://localhost:${ port }`]);
   await UI.waitForFirefoxWizard();
   server.close();
 }

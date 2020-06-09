@@ -28,7 +28,7 @@ export default class WindowsPlatform implements Platform {
     // IE, Chrome, system utils
     debug('adding devcert root to Windows OS trust store')
     try {
-      run(`certutil -addstore -user root "${ certificatePath }"`);
+      run('certutil', ['-addstore', '-user', 'root', certificatePath]);
     } catch (e) {
       e.output.map((buffer: Buffer) => {
         if (buffer) {
@@ -49,7 +49,7 @@ export default class WindowsPlatform implements Platform {
     debug('removing devcert root from Windows OS trust store');
     try {
       console.warn('Removing old certificates from trust stores. You may be prompted to grant permission for this. It\'s safe to delete old devcert certificates.');
-      run(`certutil -delstore -user root devcert`);
+      run('certutil', ['-delstore', '-user', 'root', 'devcert']);
     } catch (e) {
       debug(`failed to remove ${ certificatePath } from Windows OS trust store, continuing. ${ e.toString() }`)
     }

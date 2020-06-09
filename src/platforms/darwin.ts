@@ -52,9 +52,13 @@ export default class MacOSPlatform implements Platform {
         if (!options.skipCertutilInstall) {
           if (commandExists('brew')) {
             debug(`certutil is not already installed, but Homebrew is detected. Trying to install certutil via Homebrew...`);
-            run('brew', ['install', 'nss']);
+            try {
+              run('brew', ['install', 'nss'], { stdio: 'ignore' });
+            } catch (e) {
+              debug(`brew install nss failed`);
+            }
           } else {
-            debug(`Homebrew isn't installed, so we can't try to install certutil. Falling back to manual certificate install`);
+            debug(`Homebrew didn't work, so we can't try to install certutil. Falling back to manual certificate install`);
             return await openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
           }
         } else {
@@ -77,7 +81,9 @@ export default class MacOSPlatform implements Platform {
         'remove-trusted-cert',
         '-d',
         certificatePath
-      ]);
+      ], {
+        stdio: 'ignore'
+      });
     } catch(e) {
       debug(`failed to remove ${ certificatePath } from macOS cert store, continuing. ${ e.toString() }`);
     }
@@ -91,7 +97,7 @@ export default class MacOSPlatform implements Platform {
     const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(trimDomain)) {
-      sudoAppend(this.HOST_FILE_PATH, '127.0.0.1 ${trimDomain}\n');
+      sudoAppend(this.HOST_FILE_PATH, `127.0.0.1 ${trimDomain}\n`);
     }
   }
 

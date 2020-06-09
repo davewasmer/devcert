@@ -89,7 +89,7 @@ export default class LinuxPlatform implements Platform {
     const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(trimDomain)) {
-      sudoAppend(this.HOST_FILE_PATH, '127.0.0.1 ${trimDomain}\n');
+      sudoAppend(this.HOST_FILE_PATH, `127.0.0.1 ${trimDomain}\n`);
     }
   }
 

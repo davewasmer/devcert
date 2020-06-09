@@ -2,7 +2,6 @@ import path from 'path';
 import { existsSync as exists, readFileSync as read, writeFileSync as writeFile } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { VALID_DOMAIN } from '../constants';
 import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
 import { run, sudoAppend } from '../utils';
 import { Options } from '../index';
@@ -87,10 +86,7 @@ export default class LinuxPlatform implements Platform {
   }
 
   async addDomainToHostFileIfMissing(domain: string) {
-    const trimDomain = domain.trim();
-    if (!VALID_DOMAIN.test(trimDomain)) {
-      throw new Error(`Invalid domain name: ${trimDomain}`);
-    }
+    const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(trimDomain)) {
       sudoAppend(this.HOST_FILE_PATH, '127.0.0.1 ${trimDomain}\n');

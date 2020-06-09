@@ -4,7 +4,6 @@ import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { run, sudoAppend } from '../utils';
 import { Options } from '../index';
-import { VALID_DOMAIN } from '../constants';
 import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
 import { Platform } from '.';
 
@@ -89,10 +88,7 @@ export default class MacOSPlatform implements Platform {
   }
 
   async addDomainToHostFileIfMissing(domain: string) {
-    const trimDomain = domain.trim();
-    if (!VALID_DOMAIN.test(trimDomain)) {
-      throw new Error(`Invalid domain name: ${trimDomain}`);
-    }
+    const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
     if (!hostsFileContents.includes(trimDomain)) {
       sudoAppend(this.HOST_FILE_PATH, '127.0.0.1 ${trimDomain}\n');

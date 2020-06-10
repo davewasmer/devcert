@@ -6,6 +6,8 @@ import applicationConfigPath = require('application-config-path');
 import eol from 'eol';
 import { mktmp } from './utils';
 
+export const VALID_DOMAIN = /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/;
+
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';
 export const isLinux = process.platform === 'linux';

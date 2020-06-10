@@ -9,7 +9,8 @@ import {
   pathForDomain,
   domainsDir,
   rootCAKeyPath,
-  rootCACertPath
+  rootCACertPath,
+  VALID_DOMAIN
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
@@ -65,6 +66,9 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(domain: string, options: O = {} as O): Promise<IReturnData<O>> {
+  if (!VALID_DOMAIN.test(domain)) {
+    throw new Error(`"${domain}" is not a valid domain name.`);
+  }
   debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {

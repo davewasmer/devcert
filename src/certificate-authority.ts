@@ -43,7 +43,7 @@ export default async function installCertificateAuthority(options: Options = {})
   generateKey(rootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(`req -new -x509 -config "${ caSelfSignConfig }" -key "${ rootKeyPath }" -out "${ rootCACertPath }" -days 825`);
+  openssl(['req', '-new', '-x509', '-config', caSelfSignConfig, '-key', rootKeyPath, '-out', rootCACertPath, '-days', '825']);
 
   debug('Saving certificate authority credentials');
   await saveCertificateAuthorityCredentials(rootKeyPath);
@@ -82,7 +82,7 @@ async function saveCertificateAuthorityCredentials(keypath: string) {
 
 function certErrors(): string {
   try {
-    openssl(`x509 -in "${ rootCACertPath }" -noout`);
+    openssl(['x509', '-in', rootCACertPath, '-noout']);
     return '';
   } catch (e) {
     return e.toString();

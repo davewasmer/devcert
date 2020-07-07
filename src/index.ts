@@ -10,7 +10,8 @@ import {
   domainsDir,
   rootCAKeyPath,
   rootCACertPath,
-  VALID_DOMAIN
+  VALID_DOMAIN,
+  VALID_IP
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
@@ -66,6 +67,9 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(domain: string, options: O = {} as O): Promise<IReturnData<O>> {
+  if (VALID_IP.test(domain)) {
+    throw new Error('IP addresses are not supported currently');
+  }
   if (!VALID_DOMAIN.test(domain)) {
     throw new Error(`"${domain}" is not a valid domain name.`);
   }

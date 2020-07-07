@@ -2,8 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.1.2"></a>
+# [1.1.2](https://github.com/davewasmer/devcert/releases/tag/v1.1.2)
+
+### Bug Fixes
+
+#### [#56](https://github.com/davewasmer/devcert/issue/56): localhost is not a valid domain name 
+
+Regular expression fixed in [#57](https://github.com/davewasmer/devcert/issue/57).
+
 <a name="1.1.1"></a>
-# [1.1.1](https://github.com/davewasmer/devcert/releases/tag/v1.1.r10)
+# [1.1.1](https://github.com/davewasmer/devcert/releases/tag/v1.1.1)
 
 ### Bug Fixes
 

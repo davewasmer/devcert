@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/davewasmer/devcert#readme",
   "devDependencies": {
-    "standard-version": "^4.3.0",
+    "standard-version": "^8.0.1",
     "typescript": "^2.9.2"
   },
   "dependencies": {

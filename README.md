@@ -1,3 +1,7 @@
+# expo/devcert
+
+A fork of `devcert` with bundle size optimizations.
+
 # devcert - Development SSL made easy
 
 So, running a local HTTPS server usually sucks. There's a range of
@@ -8,7 +12,7 @@ devcert makes the process easy. Want a private key and certificate file to
 use with your server? Just ask:
 
 ```js
-let ssl = await devcert.certificateFor('my-app.test');
+let ssl = await devcert.certificateFor("my-app.test");
 https.createServer(ssl, app).listen(3000);
 ```
 
@@ -16,7 +20,7 @@ Now open https://my-app.test:3000 and voila - your page loads with no scary
 warnings or hoops to jump through.
 
 > Certificates are cached by name, so two calls for
-`certificateFor('foo')` will return the same key and certificate.
+> `certificateFor('foo')` will return the same key and certificate.
 
 ## Options
 
@@ -77,13 +81,13 @@ package, pass `skipCertutil: true`.
 If you decide to `skipCertutil`, the initial setup process for devcert
 changes in these two scenarios:
 
-* **Firefox on all platforms**: Thankully, Firefox makes this easy. There's a
+- **Firefox on all platforms**: Thankully, Firefox makes this easy. There's a
   point-and-click wizard for importing and trusting a certificate, so if you
   specify `skipCertutil: true`, devcert will instead automatically open Firefox
   and kick off this wizard for you. Simply follow the prompts to trust the
   certificate. **Reminder: you'll only need to do this once per machine**
 
-* **Chrome on Linux**: Unfortunately, it appears that the **only** way to get
+- **Chrome on Linux**: Unfortunately, it appears that the **only** way to get
   Chrome to trust an SSL certificate on Linux is via the `certutil` tooling -
   there is no manual process for it. Thus, if you are using Chrome on Linux, do
   **not** supply `skipCertuil: true`. If you do, devcert certificates will not
@@ -91,9 +95,9 @@ changes in these two scenarios:
 
 The `certutil` tooling is installed in OS-specific ways:
 
-* Mac: `brew install nss`
-* Linux: `apt install libnss3-tools`
-* Windows: N/A (there is no easy, hands-off way to install certutil on Windows,
+- Mac: `brew install nss`
+- Linux: `apt install libnss3-tools`
+- Windows: N/A (there is no easy, hands-off way to install certutil on Windows,
   so devcert will simply fallback to the wizard approach for Firefox outlined
   above)
 
@@ -134,14 +138,14 @@ To prevent this, devcert takes steps to ensure that no one can access the
 devcert certificate authority credentials to generate malicious certificates
 without you knowing. The exact approach varies by platform:
 
-* **macOS and Linux**: the certificate authority's credentials are written to files that are only readable by the root user (i.e. `chown 0 ca-cert.crt` and
-`chmod 600 ca-cert.crt`). When devcert itself needs these, it shells out to
-`sudo` invocations to read / write the credentials.
-* **Windows**: because of my unfamiliarity with Windows file permissions, I
-wasn't confident I would be able to correctly set permissions to mimic the setup
-on macOS and Linux. So instead, devcert will prompt you for a password, and then
-use that to encrypt the credentials with an AES256 cipher. The password is never
-written to disk.
+- **macOS and Linux**: the certificate authority's credentials are written to files that are only readable by the root user (i.e. `chown 0 ca-cert.crt` and
+  `chmod 600 ca-cert.crt`). When devcert itself needs these, it shells out to
+  `sudo` invocations to read / write the credentials.
+- **Windows**: because of my unfamiliarity with Windows file permissions, I
+  wasn't confident I would be able to correctly set permissions to mimic the setup
+  on macOS and Linux. So instead, devcert will prompt you for a password, and then
+  use that to encrypt the credentials with an AES256 cipher. The password is never
+  written to disk.
 
 To further protect these credentials, any time they are written to disk, they
 are written to temporary files, and are immediately deleted after they are no longer needed.
@@ -162,10 +166,10 @@ each trust store.
 
 By trusting only a single root CA, devcert is able to guarantee that when you
 want to _disable_ SSL for a domain, it can do so with no manual intervention
-- we just delete the domain-specific certificate files. Since these
-domain-specific files aren't installed in your trust stores, once they are
-gone, they are gone.
 
+- we just delete the domain-specific certificate files. Since these
+  domain-specific files aren't installed in your trust stores, once they are
+  gone, they are gone.
 
 ## Integration
 
@@ -262,9 +266,9 @@ pristine state for another round of testing.
 
 ### Virtual Machine Snapshots
 
-* [macOS](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/macOS.pvm.zip)
-* [Windows](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/MSEdge+-+Win10.zip)
-* [Ubuntu](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/Ubuntu+Linux.zip)
+- [macOS](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/macOS.pvm.zip)
+- [Windows](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/MSEdge+-+Win10.zip)
+- [Ubuntu](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/Ubuntu+Linux.zip)
 
 ## License
 

@@ -2,14 +2,14 @@ import path from 'path';
 import { writeFileSync as writeFile, existsSync as exists, readFileSync as read } from 'fs';
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
-import { run } from '../utils';
+import { run, sudoAppend } from '../utils';
 import { Options } from '../index';
 import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
 import { Platform } from '.';
 
 const debug = createDebug('devcert:platforms:macos');
 
-const getCertUtilPath = () => path.join(run('brew --prefix nss').toString().trim(), 'bin', 'certutil');
+const getCertUtilPath = () => path.join(run('brew', ['--prefix', 'nss']).toString().trim(), 'bin', 'certutil');
 
 export default class MacOSPlatform implements Platform {
 
@@ -30,7 +30,20 @@ export default class MacOSPlatform implements Platform {
 
     // Chrome, Safari, system utils
     debug('Adding devcert root CA to macOS system keychain');
-    run(`sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain -p ssl -p basic "${ certificatePath }"`);
+    run('sudo', [
+      'security',
+      'add-trusted-cert',
+      '-d',
+      '-r',
+      'trustRoot',
+      '-k',
+      '/Library/Keychains/System.keychain',
+      '-p',
+      'ssl',
+      '-p',
+      'basic',
+      certificatePath
+    ]);
 
     if (this.isFirefoxInstalled()) {
       // Try to use certutil to install the cert automatically
@@ -39,9 +52,13 @@ export default class MacOSPlatform implements Platform {
         if (!options.skipCertutilInstall) {
           if (commandExists('brew')) {
             debug(`certutil is not already installed, but Homebrew is detected. Trying to install certutil via Homebrew...`);
-            run('brew install nss');
+            try {
+              run('brew', ['install', 'nss'], { stdio: 'ignore' });
+            } catch (e) {
+              debug(`brew install nss failed`);
+            }
           } else {
-            debug(`Homebrew isn't installed, so we can't try to install certutil. Falling back to manual certificate install`);
+            debug(`Homebrew didn't work, so we can't try to install certutil. Falling back to manual certificate install`);
             return await openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
           }
         } else {
@@ -59,7 +76,14 @@ export default class MacOSPlatform implements Platform {
   removeFromTrustStores(certificatePath: string) {
     debug('Removing devcert root CA from macOS system keychain');
     try {
-      run(`sudo security remove-trusted-cert -d "${ certificatePath }"`);
+      run('sudo', [
+        'security',
+        'remove-trusted-cert',
+        '-d',
+        certificatePath
+      ], {
+        stdio: 'ignore'
+      });
     } catch(e) {
       debug(`failed to remove ${ certificatePath } from macOS cert store, continuing. ${ e.toString() }`);
     }
@@ -70,30 +94,31 @@ export default class MacOSPlatform implements Platform {
   }
 
   async addDomainToHostFileIfMissing(domain: string) {
+    const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
-    if (!hostsFileContents.includes(domain)) {
-      run(`echo '\n127.0.0.1 ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
+    if (!hostsFileContents.includes(trimDomain)) {
+      sudoAppend(this.HOST_FILE_PATH, `127.0.0.1 ${trimDomain}\n`);
     }
   }
-  
+
   deleteProtectedFiles(filepath: string) {
     assertNotTouchingFiles(filepath, 'delete');
-    run(`sudo rm -rf "${filepath}"`);
+    run('sudo', ['rm', '-rf', filepath]);
   }
 
   async readProtectedFile(filepath: string) {
     assertNotTouchingFiles(filepath, 'read');
-    return (await run(`sudo cat "${filepath}"`)).toString().trim();
+    return (await run('sudo', ['cat', filepath])).toString().trim();
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
     assertNotTouchingFiles(filepath, 'write');
     if (exists(filepath)) {
-      await run(`sudo rm "${filepath}"`);
+      await run('sudo', ['rm', filepath]);
     }
     writeFile(filepath, contents);
-    await run(`sudo chown 0 "${filepath}"`);
-    await run(`sudo chmod 600 "${filepath}"`);
+    await run('sudo', ['chown', '0', filepath]);
+    await run('sudo', ['chmod', '600', filepath]);
   }
 
   private isFirefoxInstalled() {
@@ -102,7 +127,7 @@ export default class MacOSPlatform implements Platform {
 
   private isNSSInstalled() {
     try {
-      return run('brew list -1').toString().includes('\nnss\n');
+      return run('brew', ['list', '-1']).toString().includes('\nnss\n');
     } catch (e) {
       return false;
     }

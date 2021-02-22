@@ -1,4 +1,4 @@
-import { execSync, ExecSyncOptions } from 'child_process';
+import { execFileSync, ExecFileSyncOptions } from 'child_process';
 import tmp from 'tmp';
 import createDebug from 'debug';
 import path from 'path';
@@ -8,8 +8,8 @@ import { configPath } from './constants';
 
 const debug = createDebug('devcert:util');
 
-export function openssl(cmd: string) {
-  return run(`openssl ${ cmd }`, {
+export function openssl(args: string[]) {
+  return run('openssl', args, {
     stdio: 'pipe',
     env: Object.assign({
       RANDFILE: path.join(configPath('.rnd'))
@@ -17,9 +17,15 @@ export function openssl(cmd: string) {
   });
 }
 
-export function run(cmd: string, options: ExecSyncOptions = {}) {
-  debug(`exec: \`${ cmd }\``);
-  return execSync(cmd, options);
+export function run(cmd: string, args: string[], options: ExecFileSyncOptions = {}) {
+  debug(`execFileSync: \`${ cmd } ${args.join(' ')}\``);
+  return execFileSync(cmd, args, options);
+}
+
+export function sudoAppend(file: string, input: ExecFileSyncOptions["input"]) {
+  run('sudo', ['tee', '-a', file], {
+    input
+  });
 }
 
 export function waitForUser() {

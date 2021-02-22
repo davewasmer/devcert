@@ -10,7 +10,9 @@ import {
   getStableDomainPath,
   domainsDir,
   rootCAKeyPath,
-  rootCACertPath
+  rootCACertPath,
+  VALID_DOMAIN,
+  VALID_IP
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
@@ -66,9 +68,15 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
-  const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
+  if (VALID_IP.test(domain)) {
+    throw new Error('IP addresses are not supported currently');
+  }
+  if (!VALID_DOMAIN.test(domain)) {
+    throw new Error(`"${domain}" is not a valid domain name.`);
+  }
+const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
   const domainPath = getStableDomainPath(domains);
-  debug(`Certificate requested for ${domains}. Skipping certutil install: ${Boolean(options.skipCertutilInstall)}. Skipping hosts file: ${Boolean(options.skipHostsFile)}`);
+  debug(`Certificate requested for ${ domain }. Skipping certutil install: ${ Boolean(options.skipCertutilInstall) }. Skipping hosts file: ${ Boolean(options.skipHostsFile) }`);
 
   if (options.ui) {
     Object.assign(UI, options.ui);

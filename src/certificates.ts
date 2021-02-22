@@ -26,7 +26,7 @@ export default async function generateDomainCertificate(domains: string[]): Prom
   debug(`Generating certificate signing request for ${domains}`);
   let csrFile = pathForDomain(domainPath, `certificate-signing-request.csr`);
   withDomainSigningRequestConfig(domains, (configpath) => {
-    openssl(`req -new -config "${configpath}" -key "${domainKeyPath}" -out "${csrFile}"`);
+    openssl(['req', '-new', '-config', configpath, '-key', domainKeyPath, '-out', csrFile]);
   });
 
   debug(`Generating certificate for ${domains} from signing request and signing with root CA`);
@@ -34,7 +34,7 @@ export default async function generateDomainCertificate(domains: string[]): Prom
 
   await withCertificateAuthorityCredentials(({caKeyPath, caCertPath}) => {
     withDomainCertificateConfig(domains, (domainCertConfigPath) => {
-      openssl(`ca -config "${domainCertConfigPath}" -in "${csrFile}" -out "${domainCertPath}" -keyfile "${caKeyPath}" -cert "${caCertPath}" -days 825 -batch`)
+      openssl(['ca', '-config', domainCertConfigPath, '-in', csrFile, '-out', domainCertPath, '-keyfile', caKeyPath, '-cert', caCertPath, '-days', '825', '-batch'])
     });
   });
 }
@@ -42,6 +42,6 @@ export default async function generateDomainCertificate(domains: string[]): Prom
 // Generate a cryptographic key, used to sign certificates or certificate signing requests.
 export function generateKey(filename: string): void {
   debug(`generateKey: ${ filename }`);
-  openssl(`genrsa -out "${ filename }" 2048`);
+  openssl(['genrsa', '-out', filename, '2048']);
   chmod(filename, 400);
 }

@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+<a name="1.1.2"></a>
+# [1.1.2](https://github.com/davewasmer/devcert/releases/tag/v1.1.2)
+
+### Bug Fixes
+
+#### [#56](https://github.com/davewasmer/devcert/issue/56): localhost is not a valid domain name 
+
+Regular expression fixed in [#57](https://github.com/davewasmer/devcert/issue/57).
+
+<a name="1.1.1"></a>
+# [1.1.1](https://github.com/davewasmer/devcert/releases/tag/v1.1.1)
+
+### Bug Fixes
+
+#### [#55](https://github.com/davewasmer/devcert/pull/55): Fix remote execution vulnerability by switching from execSync to execFileSync 
+
+- Change `run()` to use `execFileSync`
+- Refactor codebase to use new signature of `run()`
+- Add an extra sanitizing step: test arguments passed to `certificateFor` with a (fairly permissive) regular expression limiting them to legal domain name chars
+
+### ⚠️ This is a mandatory update! ⚠️
+
+This release fixes a security vulnerability in previous versions. Previous versions will be deprecated.
+
+
 <a name="1.1.0"></a>
 # [1.1.0](https://github.com/davewasmer/devcert/releases/tag/v1.1.0)
 

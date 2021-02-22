@@ -3,7 +3,7 @@ import { existsSync as exists, readFileSync as read, writeFileSync as writeFile 
 import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
 import { addCertificateToNSSCertDB, assertNotTouchingFiles, openCertificateInFirefox, closeFirefox, removeCertificateFromNSSCertDB } from './shared';
-import { run } from '../utils';
+import { run, sudoAppend } from '../utils';
 import { Options } from '../index';
 import UI from '../user-interface';
 import { Platform } from '.';
@@ -32,9 +32,9 @@ export default class LinuxPlatform implements Platform {
 
     debug('Adding devcert root CA to Linux system-wide trust stores');
     // run(`sudo cp ${ certificatePath } /etc/ssl/certs/devcert.crt`);
-    run(`sudo cp "${ certificatePath }" /usr/local/share/ca-certificates/devcert.crt`);
+    run('sudo', ['cp', certificatePath, '/usr/local/share/ca-certificates/devcert.crt']);
     // run(`sudo bash -c "cat ${ certificatePath } >> /etc/ssl/certs/ca-certificates.crt"`);
-    run(`sudo update-ca-certificates`);
+    run('sudo', ['update-ca-certificates']);
 
     if (this.isFirefoxInstalled()) {
       // Firefox
@@ -45,7 +45,7 @@ export default class LinuxPlatform implements Platform {
           openCertificateInFirefox(this.FIREFOX_BIN_PATH, certificatePath);
         } else {
           debug('NSS tooling is not already installed. Trying to install NSS tooling now with `apt install`');
-          run('sudo apt install libnss3-tools');
+          run('sudo',  ['apt', 'install', 'libnss3-tools']);
           debug('Installing certificate into Firefox trust stores using NSS tooling');
           await closeFirefox();
           await addCertificateToNSSCertDB(this.FIREFOX_NSS_DIR, certificatePath, 'certutil');
@@ -70,8 +70,8 @@ export default class LinuxPlatform implements Platform {
   
   removeFromTrustStores(certificatePath: string) {
     try {
-      run(`sudo rm /usr/local/share/ca-certificates/devcert.crt`);
-      run(`sudo update-ca-certificates`); 
+      run('sudo', ['rm', '/usr/local/share/ca-certificates/devcert.crt']);
+      run('sudo', ['update-ca-certificates']);
     } catch (e) {
       debug(`failed to remove ${ certificatePath } from /usr/local/share/ca-certificates, continuing. ${ e.toString() }`);
     }
@@ -86,30 +86,31 @@ export default class LinuxPlatform implements Platform {
   }
 
   async addDomainToHostFileIfMissing(domain: string) {
+    const trimDomain = domain.trim().replace(/[\s;]/g,'')
     let hostsFileContents = read(this.HOST_FILE_PATH, 'utf8');
-    if (!hostsFileContents.includes(domain)) {
-      run(`echo '127.0.0.1  ${ domain }' | sudo tee -a "${ this.HOST_FILE_PATH }" > /dev/null`);
+    if (!hostsFileContents.includes(trimDomain)) {
+      sudoAppend(this.HOST_FILE_PATH, `127.0.0.1 ${trimDomain}\n`);
     }
   }
 
   deleteProtectedFiles(filepath: string) {
     assertNotTouchingFiles(filepath, 'delete');
-    run(`sudo rm -rf "${filepath}"`);
+    run('sudo', ['rm', '-rf', filepath]);
   }
 
   async readProtectedFile(filepath: string) {
     assertNotTouchingFiles(filepath, 'read');
-    return (await run(`sudo cat "${filepath}"`)).toString().trim();
+    return (await run('sudo', ['cat', filepath])).toString().trim();
   }
 
   async writeProtectedFile(filepath: string, contents: string) {
     assertNotTouchingFiles(filepath, 'write');
     if (exists(filepath)) {
-      await run(`sudo rm "${filepath}"`);
+      await run('sudo', ['rm', filepath]);
     }
     writeFile(filepath, contents);
-    await run(`sudo chown 0 "${filepath}"`);
-    await run(`sudo chmod 600 "${filepath}"`);
+    await run('sudo', ['chown', '0', filepath]);
+    await run('sudo', ['chmod', '600', filepath]);
   }
 
   private isFirefoxInstalled() {

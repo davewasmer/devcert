@@ -27,7 +27,7 @@
   "homepage": "https://github.com/davewasmer/devcert#readme",
   "devDependencies": {
     "standard-version": "^8.0.1",
-    "typescript": "^2.9.2"
+    "typescript": "4.3.2"
   },
   "dependencies": {
     "@types/configstore": "^2.1.1",

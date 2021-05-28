@@ -22,7 +22,7 @@ export { uninstall };
 
 const debug = createDebug('devcert');
 
-export interface Options /* extends Partial<ICaBufferOpts & ICaPathOpts>  */{
+export interface Options /* extends Partial<ICaBufferOpts & ICaPathOpts>  */ {
   /** Return the CA certificate data? */
   getCaBuffer?: boolean;
   /** Return the path to the CA certificate? */
@@ -121,8 +121,8 @@ export async function certificateFor<O extends Options>(requestedDomains: string
     key: readFile(domainKeyPath),
     cert: readFile(domainCertPath)
   } as IReturnData<O>;
-  if (options.getCaBuffer) (ret as ICaBuffer).ca = readFile(rootCACertPath);
-  if (options.getCaPath) (ret as ICaPath).caPath = rootCACertPath;
+  if (options.getCaBuffer) (ret as unknown as ICaBuffer).ca = readFile(rootCACertPath);
+  if (options.getCaPath) (ret as unknown as ICaPath).caPath = rootCACertPath;
 
   return ret;
 }

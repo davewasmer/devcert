@@ -97,6 +97,98 @@ The `certutil` tooling is installed in OS-specific ways:
   so devcert will simply fallback to the wizard approach for Firefox outlined
   above)
 
+## Multiple domains (SAN)
+If you are developing a multi-tenant app or have many apps locally, you can generate a security
+certificate using `devcert` to also use the [Subject Alternative Name](https://en.wikipedia.org/wiki/Subject_Alternative_Name)
+extension, just pass an array of domains instead.
+
+```js
+let ssl = await devcert.certificateFor([
+	'localhost',
+	'local.api.example.com',
+	'local.example.com',
+	'local.auth.example.com'
+]);
+https.createServer(ssl, app).listen(3000);
+```
+
+## Docker and local development
+If you are developing with Docker, one option is to install `devcert` into a base folder in your home directory and 
+generate certificates for all of your local Docker projects. See comments and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
+
+While not elegant, you only really need to do this as often as you add new domains locally, which is probably not very often.
+
+The general script would look something like:
+
+```js
+// example: make a directory in home directory such as ~/devcert-util
+// ~/devcert-util/generate.js
+const fs = require('fs');
+const devcert = require('devcert');
+
+// or if its just one domain - devcert.certificateFor('local.example.com')
+devcert.certificateFor([
+	'localhost',
+	'local.api.example.com',
+	'local.example.com',
+	'local.auth.example.com'
+])
+	.then(({key, cert}) => {
+		fs.writeFileSync('./certs/tls.key', key);
+		fs.writeFileSync('./certs/tls.cert', cert);
+	})
+	.catch(console.error);
+```
+
+An easy way to use the files generated from above script is to copy the `~/devcert-util/certs` folder into your Docker projects:
+```
+# local-docker-project-root/
+🗀 certs/
+  🗎 tls.key
+  🗎 tls.cert
+``` 
+
+And add this line to your `.gitignore`:
+```
+certs/
+```
+
+These two files can now easily be used by any project, be it Node.js or something else.
+
+In Node, within Docker, simply load the copied certificate files into your https server:
+```js
+const fs = require('fs');
+const Express = require('express');
+const app = new Express();
+https
+  .createServer({
+    key: fs.readFileSync('./certs/tls.key'),
+    cert: fs.readFileSync('./certs/tls.cert')
+  }, app)
+  .listen(3000);
+```
+
+Also works with webpack dev server or similar technologies:
+```js
+// webpack.config.js
+const fs = require('fs');
+
+module.exports = {
+  //...
+  devServer: {
+    contentBase: join(__dirname, 'dist'),
+    host: '0.0.0.0',
+    public: 'local.api.example.com',
+    port: 3000,
+    publicPath: '/',
+    https: {
+      key: fs.readFileSync('./certs/tls.key'),
+      cert: fs.readFileSync('./certs/tls.cert')
+    }
+  }
+};
+```
+
 ## How it works
 
 When you ask for a development certificate, devcert will first check to see

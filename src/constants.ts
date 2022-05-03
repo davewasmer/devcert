@@ -6,9 +6,6 @@ import applicationConfigPath = require('application-config-path');
 import eol from 'eol';
 import {mktmp, numericHash} from './utils';
 
-export const VALID_IP = /(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3}/;
-export const VALID_DOMAIN = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.?)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]$/i;
-
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';
 export const isLinux = process.platform === 'linux';

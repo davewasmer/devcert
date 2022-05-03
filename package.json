@@ -45,6 +45,7 @@
     "eol": "^0.9.1",
     "get-port": "^3.2.0",
     "glob": "^7.1.2",
+    "is-valid-domain": "^0.1.6",
     "lodash": "^4.17.4",
     "mkdirp": "^0.5.1",
     "password-prompt": "^1.0.4",
@@ -52,6 +53,5 @@
     "sudo-prompt": "^8.2.0",
     "tmp": "^0.0.33",
     "tslib": "^1.10.0"
-  },
-  "optionalDependencies": {}
+  }
 }

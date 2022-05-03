@@ -11,13 +11,12 @@ import {
   domainsDir,
   rootCAKeyPath,
   rootCACertPath,
-  VALID_DOMAIN,
-  VALID_IP
 } from './constants';
 import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
 import generateDomainCertificate from './certificates';
 import UI, { UserInterface } from './user-interface';
+import isValidDomain from 'is-valid-domain';
 export { uninstall };
 
 const debug = createDebug('devcert');
@@ -69,11 +68,8 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  */
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
   const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
-  if (domains.some((d) => VALID_IP.test(d))) {
-    throw new Error('IP addresses are not supported currently');
-  }
   domains.forEach((domain) => {
-    if (!VALID_DOMAIN.test(domain)) {
+    if (!isValidDomain(domain, { subdomain: false, wildcard: false, allowUnicode: true, topLevel: false })) {
       throw new Error(`"${domain}" is not a valid domain name.`);
     }
   });

@@ -69,7 +69,7 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
   const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
   domains.forEach((domain) => {
-    if (!isValidDomain(domain, { subdomain: false, wildcard: false, allowUnicode: true, topLevel: false })) {
+    if (domain !== "localhost" && !isValidDomain(domain, { subdomain: true, wildcard: false, allowUnicode: true, topLevel: false })) {
       throw new Error(`"${domain}" is not a valid domain name.`);
     }
   });

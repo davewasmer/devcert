@@ -86,7 +86,7 @@ changes in these two scenarios:
 * **Chrome on Linux**: Unfortunately, it appears that the **only** way to get
   Chrome to trust an SSL certificate on Linux is via the `certutil` tooling -
   there is no manual process for it. Thus, if you are using Chrome on Linux, do
-  **not** supply `skipCertuil: true`. If you do, devcert certificates will not
+  **not** supply `skipCertutil: true`. If you do, devcert certificates will not
   be trusted by Chrome.
 
 The `certutil` tooling is installed in OS-specific ways:

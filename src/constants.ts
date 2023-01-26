@@ -1,10 +1,11 @@
-import path from 'path';
-import { unlinkSync as rm, writeFileSync as writeFile, readFileSync as readFile } from 'fs';
-import { sync as mkdirp } from 'mkdirp';
-import { template as makeTemplate } from 'lodash';
-import applicationConfigPath = require('application-config-path');
 import eol from 'eol';
-import {mktmp, numericHash} from './utils';
+import { readFileSync as readFile, unlinkSync as rm, writeFileSync as writeFile } from 'fs';
+import { template as makeTemplate } from 'lodash';
+import { sync as mkdirp } from 'mkdirp';
+import { isIP } from 'net';
+import path from 'path';
+import { mktmp, numericHash } from './utils';
+import applicationConfigPath = require('application-config-path');
 
 // Platform shortcuts
 export const isMac = process.platform === 'darwin';
@@ -52,10 +53,12 @@ export const caSelfSignConfig = path.join(__dirname, '../openssl-configurations/
 function generateSubjectAltNames(domains: string[]): string {
   return domains
     .reduce((dnsEntries, domain) =>
-      dnsEntries.concat([
-        `DNS.${dnsEntries.length + 1} = ${domain}`,
-        `DNS.${dnsEntries.length + 2} = *.${domain}`,
-      ]), [] as string[])
+      isIP(domain) > 0
+        ? dnsEntries.concat(`DNS.${dnsEntries.length + 1} = ${domain}`)
+        : dnsEntries.concat([
+          `DNS.${dnsEntries.length + 1} = ${domain}`,
+          `DNS.${dnsEntries.length + 2} = *.${domain}`,
+        ]), [] as string[])
     .join("\r\n");
 }
 

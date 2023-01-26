@@ -1,22 +1,17 @@
-import { readFileSync as readFile, readdirSync as readdir, existsSync as exists } from 'fs';
-import createDebug from 'debug';
 import { sync as commandExists } from 'command-exists';
+import createDebug from 'debug';
+import { existsSync as exists, readdirSync as readdir, readFileSync as readFile } from 'fs';
+import isValidDomain from 'is-valid-domain';
+import { isIP } from 'net';
 import rimraf from 'rimraf';
-import {
-  isMac,
-  isLinux,
-  isWindows,
-  pathForDomain,
-  getStableDomainPath,
-  domainsDir,
-  rootCAKeyPath,
-  rootCACertPath,
-} from './constants';
-import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
 import generateDomainCertificate from './certificates';
+import {
+  domainsDir, getStableDomainPath, isLinux, isMac, isWindows,
+  pathForDomain, rootCACertPath, rootCAKeyPath
+} from './constants';
+import currentPlatform from './platforms';
 import UI, { UserInterface } from './user-interface';
-import isValidDomain from 'is-valid-domain';
 export { uninstall };
 
 const debug = createDebug('devcert');
@@ -69,7 +64,7 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
   const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
   domains.forEach((domain) => {
-    if (domain !== "localhost" && !isValidDomain(domain, { subdomain: true, wildcard: false, allowUnicode: true, topLevel: false })) {
+    if (domain !== "localhost" && !isValidDomain(domain, { subdomain: true, wildcard: false, allowUnicode: true, topLevel: false }) && isIP(domain) === 0) {
       throw new Error(`"${domain}" is not a valid domain name.`);
     }
   });

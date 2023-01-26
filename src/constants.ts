@@ -54,7 +54,7 @@ function generateSubjectAltNames(domains: string[]): string {
   return domains
     .reduce((dnsEntries, domain) =>
       isIP(domain) > 0
-        ? dnsEntries.concat(`DNS.${dnsEntries.length + 1} = ${domain}`)
+        ? dnsEntries.concat(`IP.${dnsEntries.length + 1} = ${domain}`)
         : dnsEntries.concat([
           `DNS.${dnsEntries.length + 1} = ${domain}`,
           `DNS.${dnsEntries.length + 2} = *.${domain}`,

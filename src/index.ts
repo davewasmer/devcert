@@ -65,7 +65,7 @@ export async function certificateFor<O extends Options>(requestedDomains: string
   const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
   domains.forEach((domain) => {
     if (domain !== "localhost" && !isValidDomain(domain, { subdomain: true, wildcard: false, allowUnicode: true, topLevel: false }) && isIP(domain) === 0) {
-      throw new Error(`"${domain}" is not a valid domain name.`);
+      throw new Error(`"${domain}" is not a domain name or IP address.`);
     }
   });
 

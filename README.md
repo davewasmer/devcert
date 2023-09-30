@@ -1,5 +1,5 @@
 > [!NOTE]  
-> This is a fork of [devcert](https://github.com/davewasmer/devcert) which adds the following capabilities on top of the ones present in the base repo:
+> This is a fork of [devcert](https://github.com/davewasmer/devcert). It adds the following capabilities on top of the ones present in **devcert**:
 >
 > -   Revoke an existing, devcert created SSL certificate for a domain.
 
@@ -367,7 +367,3 @@ pristine state for another round of testing.
 -   [macOS](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/macOS.pvm.zip)
 -   [Windows](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/MSEdge+-+Win10.zip)
 -   [Ubuntu](https://s3-us-west-1.amazonaws.com/devcert-test-snapshots/Ubuntu+Linux.zip)
-
-## License
-
-MIT © [Dave Wasmer](http://davewasmer.com)

@@ -1,7 +1,6 @@
 import createDebug from 'debug';
 import crypto from 'crypto';
-import { writeFileSync as write, readFileSync as read } from 'fs';
-import { sync as rimraf } from 'rimraf';
+import { rmSync as rm, writeFileSync as write, readFileSync as read } from 'fs';
 import { Options } from '../index';
 import { assertNotTouchingFiles, openCertificateInFirefox } from './shared';
 import { Platform } from '.';
@@ -64,7 +63,7 @@ export default class WindowsPlatform implements Platform {
   
   deleteProtectedFiles(filepath: string) {
     assertNotTouchingFiles(filepath, 'delete');
-    rimraf(filepath);
+    rm(filepath, { force: true, recursive: true });
   }
 
   async readProtectedFile(filepath: string): Promise<string> {

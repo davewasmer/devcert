@@ -84,7 +84,7 @@ changes in these two scenarios:
   certificate. **Reminder: you'll only need to do this once per machine**
 
 * **Chrome on Linux**: If needed, the root certificate can be added manually to
-  Chrome later. Navigate to `chrome://settings/certificates` (or through the
+  Chrome manually. Navigate to `chrome://settings/certificates` (or through the
   settings menu by going 'Settings' -> 'Privacy and security' -> 'Security' ->
   'Manage certificates'), click the 'Authorities' tab, and then import the
   certificate. After initial use of devcert, the root certificate will be placed

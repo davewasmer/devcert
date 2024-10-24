@@ -83,11 +83,12 @@ changes in these two scenarios:
   and kick off this wizard for you. Simply follow the prompts to trust the
   certificate. **Reminder: you'll only need to do this once per machine**
 
-* **Chrome on Linux**: Unfortunately, it appears that the **only** way to get
-  Chrome to trust an SSL certificate on Linux is via the `certutil` tooling -
-  there is no manual process for it. Thus, if you are using Chrome on Linux, do
-  **not** supply `skipCertuil: true`. If you do, devcert certificates will not
-  be trusted by Chrome.
+* **Chrome on Linux**: If needed, the root certificate can be added manually to
+  Chrome manually. Navigate to `chrome://settings/certificates` (or through the
+  settings menu by going 'Settings' -> 'Privacy and security' -> 'Security' ->
+  'Manage certificates'), click the 'Authorities' tab, and then import the
+  certificate. After initial use of devcert, the root certificate will be placed
+  in the user's home directory, in `~/.config/devcert/certificate-authority/certificate.cert`.
 
 The `certutil` tooling is installed in OS-specific ways:
 

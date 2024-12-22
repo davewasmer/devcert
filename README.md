@@ -77,7 +77,7 @@ package, pass `skipCertutil: true`.
 If you decide to `skipCertutil`, the initial setup process for devcert
 changes in these two scenarios:
 
-* **Firefox on all platforms**: Thankully, Firefox makes this easy. There's a
+* **Firefox on all platforms**: Thankfully, Firefox makes this easy. There's a
   point-and-click wizard for importing and trusting a certificate, so if you
   specify `skipCertutil: true`, devcert will instead automatically open Firefox
   and kick off this wizard for you. Simply follow the prompts to trust the
@@ -113,7 +113,7 @@ https.createServer(ssl, app).listen(3000);
 ```
 
 ## Docker and local development
-If you are developing with Docker, one option is to install `devcert` into a base folder in your home directory and 
+If you are developing with Docker, one option is to install `devcert` into a base folder in your home directory and
 generate certificates for all of your local Docker projects. See comments and caveats in [this issue](https://github.com/davewasmer/devcert/issues/17).
 
 While not elegant, you only really need to do this as often as you add new domains locally, which is probably not very often.
@@ -146,7 +146,7 @@ An easy way to use the files generated from above script is to copy the `~/devce
 🗀 certs/
   🗎 tls.key
   🗎 tls.cert
-``` 
+```
 
 And add this line to your `.gitignore`:
 ```
@@ -269,7 +269,7 @@ With that in mind, if you'd like to use devcert in your library/framework/CLI,
 devcert makes that easy.
 
 In addition to the options above, devcert exposes a `ui` option. This option
-allows you to control all the points where devcert requries user interaction,
+allows you to control all the points where devcert requires user interaction,
 substituting your own prompts and user interface. You can use this to brand
 the experience with your own tool's name, localize the messages, or integrate
 devcert into a larger existing workflow.
@@ -333,7 +333,7 @@ The `ui` option should be an object with the following methods:
 ```
 
 You can supply any or all of these methods - ones you do not supply will fall
-back to the default implemenation.
+back to the default implementation.
 
 ## Testing
 

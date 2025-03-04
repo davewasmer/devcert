@@ -1,6 +1,6 @@
 {
     "name": "@adobe-ccwebext/ccweb-add-on-devcert",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "description": "Generate trusted local SSL/TLS certificates for local SSL development",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

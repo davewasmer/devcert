@@ -6,6 +6,7 @@ import rimraf from "rimraf";
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from "./certificate-authority";
 import { generateDomainCertificate, revokeDomainCertificate } from "./certificates";
 import {
+    configDir,
     domainsDir,
     getStableDomainPath,
     isLinux,
@@ -17,7 +18,8 @@ import {
 } from "./constants";
 import currentPlatform from "./platforms";
 import UI, { UserInterface } from "./user-interface";
-export { uninstall };
+
+export { configDir, uninstall };
 
 const debug = createDebug("devcert");
 

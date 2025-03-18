@@ -3,8 +3,8 @@ import createDebug from "debug";
 import { existsSync as exists, readFileSync as readFile, readdirSync as readdir } from "fs";
 import isValidDomain from "is-valid-domain";
 import rimraf from "rimraf";
-import installCertificateAuthority, { ensureCACertReadable, uninstall } from "./certificate-authority";
-import { generateDomainCertificate, revokeDomainCertificate } from "./certificates";
+import installCertificateAuthority, { ensureCACertReadable, uninstall, caExpiryInDays } from "./certificate-authority";
+import { generateDomainCertificate, revokeDomainCertificate, certificateExpiryInDays } from "./certificates";
 import {
     configDir,
     domainsDir,
@@ -19,7 +19,7 @@ import {
 import currentPlatform from "./platforms";
 import UI, { UserInterface } from "./user-interface";
 
-export { configDir, uninstall };
+export { caExpiryInDays, certificateExpiryInDays, configDir, uninstall };
 
 const debug = createDebug("devcert");
 

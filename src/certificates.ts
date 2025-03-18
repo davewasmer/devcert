@@ -9,7 +9,7 @@ import {
     withDomainCertificateConfig,
     withDomainSigningRequestConfig,
 } from "./constants";
-import { openssl } from "./utils";
+import { openssl, parseOpenSSLExpiryData } from "./utils";
 
 const debug = createDebug("devcert:certificates");
 
@@ -89,3 +89,18 @@ export function generateKey(filename: string): void {
     openssl(["genrsa", "-out", filename, "2048"]);
     chmod(filename, 400);
 }
+
+/**
+ * Get domain certificate expiry in days.
+ */
+export function certificateExpiryInDays(domain: string): number {
+    const domainPath = getStableDomainPath([domain]);
+    let domainCertPath = pathForDomain(domainPath, `certificate.crt`);
+
+    try {
+      const certExpiryData = openssl(['x509', '-in', domainCertPath, '-noout', '-enddate' ]).toString().trim();
+      return parseOpenSSLExpiryData(certExpiryData);
+    } catch {
+      return -1;
+    }
+  }

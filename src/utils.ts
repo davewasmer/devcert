@@ -64,3 +64,21 @@ export const numericHash = (str: string): number => {
 
   return hash >>> 0;
 };
+
+export function parseOpenSSLExpiryData(data: string) {
+  if (data === '') {
+    return -1;
+  }
+
+  const resultContents = data.split('=');
+  if (resultContents.length !== 2) {
+    return -1;
+  }
+
+  const expiryString = resultContents[1];
+  const expiry = new Date(expiryString);
+  
+  const expiryEpoch = expiry.getTime();
+  const nowEpoch = new Date().getTime();
+  return Math.floor((expiryEpoch - nowEpoch) / 86400000); // ms to days
+}

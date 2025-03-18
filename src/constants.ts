@@ -12,7 +12,7 @@ export const isLinux = process.platform === 'linux';
 export const isWindows = process.platform === 'win32';
 
 // Common paths
-export const configDir = applicationConfigPath('devcert');
+export const configDir = applicationConfigPath(path.join('Adobe', 'CCWebAddOn', 'devcert'));
 export const configPath: (...pathSegments: string[]) => string = path.join.bind(path, configDir);
 
 const getFilteredDomains = (domains: string[]) =>

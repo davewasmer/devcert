@@ -18,7 +18,7 @@ import {
   caVersionFile
 } from './constants';
 import currentPlatform from './platforms';
-import { openssl, mktmp } from './utils';
+import { openssl, mktmp, parseOpenSSLExpiryData } from './utils';
 import { generateKey } from './certificates';
 import { Options } from './index';
 
@@ -141,4 +141,16 @@ export function uninstall(): void {
   currentPlatform.deleteProtectedFiles(domainsDir);
   currentPlatform.deleteProtectedFiles(rootCADir);
   currentPlatform.deleteProtectedFiles(getLegacyConfigDir());
+}
+
+/**
+ * Get certificate authority expiry in days.
+ */
+export function caExpiryInDays(): number {
+  try {
+    const caExpiryData = openssl(['x509', '-in', rootCACertPath, '-noout', '-enddate' ]).toString().trim();
+    return parseOpenSSLExpiryData(caExpiryData);
+  } catch {
+    return -1;
+  }
 }

@@ -51,7 +51,7 @@
     "password-prompt": "^1.0.4",
     "rimraf": "^2.6.2",
     "sudo-prompt": "^8.2.0",
-    "tmp": "^0.0.33",
+    "tmp": "^0.2.4",
     "tslib": "^1.10.0"
   }
 }

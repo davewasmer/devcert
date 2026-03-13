@@ -48,6 +48,7 @@
     "is-valid-domain": "^0.1.6",
     "lodash": "^4.17.4",
     "mkdirp": "^0.5.1",
+    "parse-domain": "^8.2.2",
     "password-prompt": "^1.0.4",
     "rimraf": "^2.6.2",
     "sudo-prompt": "^8.2.0",

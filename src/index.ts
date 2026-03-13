@@ -12,11 +12,11 @@ import {
   rootCAKeyPath,
   rootCACertPath,
 } from './constants';
+import { parseDomain, ParseResultType } from 'parse-domain';
 import currentPlatform from './platforms';
 import installCertificateAuthority, { ensureCACertReadable, uninstall } from './certificate-authority';
 import generateDomainCertificate from './certificates';
 import UI, { UserInterface } from './user-interface';
-import isValidDomain from 'is-valid-domain';
 export { uninstall };
 
 const debug = createDebug('devcert');
@@ -59,17 +59,17 @@ type IReturnData<O extends Options = {}> = (IDomainData) & (IReturnCa<O>) & (IRe
  * Returns a promise that resolves with { key, cert }, where `key` and `cert`
  * are Buffers with the contents of the certificate private key and certificate
  * file, respectively
- * 
+ *
  * If `options.getCaBuffer` is true, return value will include the ca certificate data
  * as { ca: Buffer }
- * 
+ *
  * If `options.getCaPath` is true, return value will include the ca certificate path
  * as { caPath: string }
  */
 export async function certificateFor<O extends Options>(requestedDomains: string | string[], options: O = {} as O): Promise<IReturnData<O>> {
   const domains = Array.isArray(requestedDomains) ? requestedDomains : [requestedDomains];
   domains.forEach((domain) => {
-    if (domain !== "localhost" && !isValidDomain(domain, { subdomain: true, wildcard: false, allowUnicode: true, topLevel: false })) {
+    if (domain !== "localhost" && parseDomain(domain).type === ParseResultType.Invalid) {
       throw new Error(`"${domain}" is not a valid domain name.`);
     }
   });

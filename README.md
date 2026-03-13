@@ -25,12 +25,12 @@ authority (CA) which it uses to sign all certificates it creates. It will try
 to register this CA with OS keychains in OSX, Linux, and Windows. However,
 some HTTP clients (such as Firefox and NodeJS itself) use their own trusted
 certificate list instead of the operating system's keychain. The `getCaPath`
-and `getCaBuffer` options make the CA available in the `certificateFor()`
-return object itself, so that these programs can choose whether to trust it.
+and `getCaBuffer` options make the CA available in the object returned by
+`certificateFor()`, so that these programs can choose whether to trust it.
 
 ### getCaPath
 
-Set this option to `true` and the returned object will inlude a `caPath`
+Set this option to `true` and the returned object will include a `caPath`
 property, set to the file path of the certificate authority file. Use this
 path to add the certificate to local trust stores which accept paths as
 arguments, such as NodeJS's builtin environment variable
@@ -38,10 +38,10 @@ arguments, such as NodeJS's builtin environment variable
 
 ### getCaBuffer
 
-Set this option to `true` and the returned object will inlude a `ca`
+Set this option to `true` and the returned object will include a `ca`
 property, set to the UTF-8-encoded contents of the certificate authority
 file. Use this path to add the certificate to local trust stores which don't
-use OS settings, lke the examples mentioned above.
+use OS settings, like the examples mentioned above.
 
 ### skipHostsFile
 
@@ -52,9 +52,9 @@ than to the real domain). It does this by modifying your `/etc/hosts` file.
 
 If you pass in the `skipHostsFile` option, devcert will skip this step. This
 means that if you ask for certificates for `my-app.test` (for example), and
-don't have some other DNS redirect method in place, that you won't be able to
+don't have some other DNS redirect method in place, you won't be able to
 access your app at `https://my-app.test` because your computer wouldn't know
-that `my-app.test` should resolve your local machine.
+that `my-app.test` should resolve to your local machine.
 
 Keep in mind that SSL certificates are issued for _domains_, so if you ask
 for a certificate for `my-app.test`, and don't have any kind of DNS redirect
@@ -66,18 +66,18 @@ local machine (since the SSL certificate won't say `localhost`).
 
 This option will tell devcert to avoid installing `certutil` tooling.
 
-`certutil` is a tooling package used to automated the installation of SSL
+`certutil` is a tooling package used to automate the installation of SSL
 certificates in certain circumstances; specifically, Firefox (for every OS)
 and Chrome (on Linux only).
 
-Normally, devcert will attempt to install `certutil` if it's need and not
-already present on your system. If don't want devcert to install this
+Normally, devcert will attempt to install `certutil` if it's needed and not
+already present on your system. If you don't want devcert to install this
 package, pass `skipCertutil: true`.
 
 If you decide to `skipCertutil`, the initial setup process for devcert
 changes in these two scenarios:
 
-* **Firefox on all platforms**: Thankully, Firefox makes this easy. There's a
+* **Firefox on all platforms**: Thankfully, Firefox makes this easy. There's a
   point-and-click wizard for importing and trusting a certificate, so if you
   specify `skipCertutil: true`, devcert will instead automatically open Firefox
   and kick off this wizard for you. Simply follow the prompts to trust the
@@ -200,7 +200,7 @@ the new root CA.
 Since your machine now trusts this root CA, it will trust any certificates
 signed by it. So when you ask for a certificate for a new domain, devcert
 will use the root CA credentials to generate a certificate specific to the
-domain you requested, and returns the new certificate to you.
+domain you requested, and then return the new certificate to you.
 
 If you request a domain that has already had certificates generated for it,
 devcert will simply return the cached certificates.
@@ -209,7 +209,7 @@ This setup ensures that browsers won't show scary warnings about untrusted
 certificates, since your OS and browsers will now trust devcert's
 certificates.
 
-## Security Concerns
+## Security concerns
 
 There's a reason that your OS prompts you for your root password when devcert
 attempts to install it's root certificate authority. By adding it to your
@@ -226,7 +226,8 @@ To prevent this, devcert takes steps to ensure that no one can access the
 devcert certificate authority credentials to generate malicious certificates
 without you knowing. The exact approach varies by platform:
 
-* **macOS and Linux**: the certificate authority's credentials are written to files that are only readable by the root user (i.e. `chown 0 ca-cert.crt` and
+* **macOS and Linux**: the certificate authority's credentials are written to
+files that are only readable by the root user (i.e. `chown 0 ca-cert.crt` and
 `chmod 600 ca-cert.crt`). When devcert itself needs these, it shells out to
 `sudo` invocations to read / write the credentials.
 * **Windows**: because of my unfamiliarity with Windows file permissions, I
@@ -236,10 +237,11 @@ use that to encrypt the credentials with an AES256 cipher. The password is never
 written to disk.
 
 To further protect these credentials, any time they are written to disk, they
-are written to temporary files, and are immediately deleted after they are no longer needed.
+are written to temporary files, and are immediately deleted after they are no
+longer needed.
 
 Additionally, the root CA certificate is unique to your machine only: it's
-generated on-the-fly when it is first installed. ensuring there are no
+generated on-the-fly when it is first installed, ensuring there are no
 central / shared keys to crack across machines.
 
 ### Why install a root certificate authority at all?
@@ -261,7 +263,7 @@ gone, they are gone.
 
 ## Integration
 
-devcert has been designed from day one to work as low-level library that other
+devcert has been designed from day one to work as a low-level library that other
 tools can delegate to. The goal is to make HTTPS development easy for everyone,
 regardless of framework or library choice.
 
@@ -293,8 +295,8 @@ The `ui` option should be an object with the following methods:
     // to programmatically install it's certificate authority in the Firefox
     // trust store. Firefox appears to overwrite changes to the trust store on
     // exit, so Firefox must be closed before devcert can continue. devcert will
-    // wait for Firefox to exit - this is just to prompt the user that they
-    // need to close the application.
+    // wait for Firefox to exit - this is just to prompt the user to close the
+    // application.
   },
   async startFirefoxWizard(certificateHost: string) {
     // Invoked when devcert detects a Firefox installation and `skipCertutil:
@@ -302,8 +304,8 @@ The `ui` option should be an object with the following methods:
     // Firefox certificate import wizard GUI. Used to give the user a heads up
     // as to why they are about to see Firefox pop up.
     //
-    // The certificateHost provided is the URL for the temporary server that
-    // devcert has spun up in order to trigger the wizard(Firefox needs try to
+    // The certificateHost argument is the URL for the temporary server that
+    // devcert has spun up in order to trigger the wizard (Firefox needs try to
     // "download" the cert to trigger the wizard). This URL will load the page
     // supplied in the `firefoxWizardPromptPage()` method below.
     //
@@ -342,7 +344,9 @@ solution for cross platform GUI testing (the GUI part is necessary to test
 each browser's handling of devcert certificates, as well as test the Firefox
 wizard flow).
 
-To make things easier, devcert comes with a series of virtual machine images. Each one is a snapshot taken right before running a test - just launch the machine and hit <Enter>.
+To make things easier, devcert comes with a series of virtual machine images.
+Each one is a snapshot taken right before running a test - just launch the
+machine and hit <Enter>.
 
 You can also use the snapshotted state of the VMs to roll them back to a
 pristine state for another round of testing.

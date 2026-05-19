@@ -77,7 +77,7 @@ export default class WindowsPlatform implements Platform {
       return this.decrypt(read(filepath, 'utf8'), encryptionKey);
     } catch (e) {
       // If it's a bad password, clear the cached copy and retry
-      if (e.message.indexOf('bad decrypt') >= -1) {
+      if (e.message.indexOf('bad decrypt') !== -1) {
         encryptionKey = null;
         return await this.readProtectedFile(filepath);
       }

@@ -30,11 +30,17 @@ export default class WindowsPlatform implements Platform {
     try {
       run('certutil', ['-addstore', '-user', 'root', certificatePath]);
     } catch (e) {
-      e.output.map((buffer: Buffer) => {
-        if (buffer) {
-          console.log(buffer.toString());
-        }
-      });
+      if (e.output) {
+        e.output.map((buffer: Buffer) => {
+          if (buffer) {
+            console.log(buffer.toString());
+          }
+        });
+      }
+      // certutil non-zero exit means the user declined the Windows Security
+      // Warning, or the store is otherwise unwritable. Propagate so the caller
+      // can avoid persisting on-disk state that would block future retries.
+      throw e;
     }
     debug('adding devcert root to Firefox trust store')
     // Firefox (don't even try NSS certutil, no easy install for Windows)

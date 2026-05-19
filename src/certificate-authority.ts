@@ -33,23 +33,43 @@ export default async function installCertificateAuthority(options: Options = {})
   uninstall();
   ensureConfigDirs();
 
-  debug(`Making a temp working directory for files to copied in`);
-  let rootKeyPath = mktmp();
-
   debug(`Generating the OpenSSL configuration needed to setup the certificate authority`);
   seedConfigFiles();
 
+  // Generate the root key + CA cert into TEMP paths first, so a failed/declined
+  // trust-store install does not leave behind canonical files that make
+  // certificateFor's `!existsSync(rootCAKeyPath)` guard skip re-installation
+  // on subsequent runs.
+  debug(`Making a temp working directory for files to be copied in`);
+  let tmpRootKeyPath = mktmp();
+  let tmpRootCertPath = mktmp();
+
   debug(`Generating a private key`);
-  generateKey(rootKeyPath);
+  generateKey(tmpRootKeyPath);
 
   debug(`Generating a CA certificate`);
-  openssl(['req', '-new', '-x509', '-config', caSelfSignConfig, '-key', rootKeyPath, '-out', rootCACertPath, '-days', '825']);
+  openssl(['req', '-new', '-x509', '-config', caSelfSignConfig, '-key', tmpRootKeyPath, '-out', tmpRootCertPath, '-days', '825']);
 
-  debug('Saving certificate authority credentials');
-  await saveCertificateAuthorityCredentials(rootKeyPath);
-
+  // Install into the OS trust store BEFORE persisting to the canonical paths.
+  // If addToTrustStores throws (e.g. user declines the Windows Security Warning,
+  // or `sudo security add-trusted-cert` fails on macOS), the canonical files
+  // are never written and the next certificateFor() call will retry the whole
+  // install — including the user-facing prompt.
   debug(`Adding the root certificate authority to trust stores`);
-  await currentPlatform.addToTrustStores(rootCACertPath, options);
+  try {
+    await currentPlatform.addToTrustStores(tmpRootCertPath, options);
+  } catch (e) {
+    rm(tmpRootKeyPath);
+    rm(tmpRootCertPath);
+    throw e;
+  }
+
+  debug(`Persisting root CA certificate and key to their canonical paths`);
+  writeFile(rootCACertPath, readFile(tmpRootCertPath));
+  await saveCertificateAuthorityCredentials(tmpRootKeyPath);
+
+  rm(tmpRootKeyPath);
+  rm(tmpRootCertPath);
 }
 
 /**
